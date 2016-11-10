@@ -489,6 +489,7 @@ namespace LeagueSharp.SDK
 
             var prediction = this.GetPrediction(unit, areaOfEffect);
             var prediction2 = (charge != null) ? charge.GetPrediction(unit) : skillshot.GetPrediction(unit);
+            var prediction3 = skillshot.GetPrediction(unit);
 
             if (minTargets != -1 && prediction.AoeTargetsHitCount <= minTargets)
             {
@@ -523,11 +524,16 @@ namespace LeagueSharp.SDK
                     this.StartCharging();
                 }
             }
-            else
+
+            if (this.IsSkillshot)
             {
-                if (!GameObjects.Player.Spellbook.CastSpell(this.Slot, prediction2.CastPosition))
+                if (skillshot.Cast(unit))
                 {
-                    return CastStates.NotCasted;
+                    return CastStates.SuccessfullyCasted;
+                }
+                else if (ObjectManager.Player.Spellbook.CastSpell(SpellSlot.R, prediction3.CastPosition))
+                {
+                    return CastStates.SuccessfullyCasted;
                 }
             }
 
