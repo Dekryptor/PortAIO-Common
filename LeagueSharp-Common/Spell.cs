@@ -1311,6 +1311,7 @@
             //Get the best position to cast the spell.
             var prediction = this.GetPrediction(unit, aoe);
             var prediction2 = (charge != null) ? charge.GetPrediction(unit) : skillshot.GetPrediction(unit);
+            var prediction3 = skillshot.GetPrediction(unit);
 
             if (minTargets != -1 && prediction.AoeTargetsHitCount < minTargets)
             {
@@ -1359,16 +1360,16 @@
                     this.StartCharging();
                 }
             }
-            else if (packetCast)
+
+            if (this.IsSkillshot)
             {
-                ObjectManager.Player.Spellbook.CastSpell(this.Slot, prediction2.CastPosition, false);
-            }
-            else
-            {
-                //Cant cast the spell (actually should not happen).
-                if (!ObjectManager.Player.Spellbook.CastSpell(this.Slot, prediction2.CastPosition))
+                if (skillshot.Cast(unit))
                 {
-                    return CastStates.NotCasted;
+                    return CastStates.SuccessfullyCasted;
+                }
+                else if(ObjectManager.Player.Spellbook.CastSpell(SpellSlot.R, prediction3.CastPosition))
+                {
+                    return CastStates.SuccessfullyCasted;
                 }
             }
 
