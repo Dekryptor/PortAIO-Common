@@ -1696,6 +1696,11 @@ namespace LeagueSharp.Common
                 this._orbwalkingPoint = point;
             }
 
+            public Vector3 GetOrbwalkingPoint()
+            {
+                return this._orbwalkingPoint;
+            }
+
             /// <summary>
             ///     Determines if the orbwalker should wait before attacking a minion.
             /// </summary>
