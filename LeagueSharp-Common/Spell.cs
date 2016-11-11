@@ -1363,11 +1363,11 @@
 
             if (this.IsSkillshot)
             {
-                if (skillshot.Cast(unit))
+                if (ObjectManager.Player.Spellbook.CastSpell(Slot, prediction3.CastPosition))
                 {
                     return CastStates.SuccessfullyCasted;
                 }
-                else if(ObjectManager.Player.Spellbook.CastSpell(SpellSlot.R, prediction3.CastPosition))
+                else if (skillshot.Cast(unit))
                 {
                     return CastStates.SuccessfullyCasted;
                 }
