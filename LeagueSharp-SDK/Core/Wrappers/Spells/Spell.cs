@@ -1024,7 +1024,11 @@ namespace LeagueSharp.SDK
             else if (IsChargedSpell && charge != null)
             {
                 var b = charge.GetPrediction(unit);
-                return new PredictionOutput() { CastPosition = b.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = b.UnitPosition, AoeHitCount = pred.AoeHitCount};
+                return new PredictionOutput() { CastPosition = b.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = b.UnitPosition, AoeHitCount = pred.AoeHitCount };
+            }
+            else
+            {
+                return pred;
             }
             Console.WriteLine("Please report this to Berb.");
             return new PredictionOutput();
