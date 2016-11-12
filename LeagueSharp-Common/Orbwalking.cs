@@ -1807,6 +1807,11 @@ namespace LeagueSharp.Common
                 }
             }
 
+            public static int getWindUp()
+            {
+                return _config.Item("ExtraWindup").GetValue<Slider>().Value;
+            }
+
             /// <summary>
             ///     Returns if a minion should be attacked
             /// </summary>
