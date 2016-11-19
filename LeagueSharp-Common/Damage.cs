@@ -3920,22 +3920,7 @@ namespace LeagueSharp.Common
                                 Slot = SpellSlot.E, DamageType = DamageType.Physical,
                                 Damage = (source, target, level) =>
                                     {
-                                        var count = target.GetBuffCount("kalistaexpungemarker");
-                                        if (count > 0)
-                                        {
-                                            return (new double[] { 20, 30, 40, 50, 60 }[level]
-                                                    + 0.6
-                                                    * (source.TotalAttackDamage)) +
-                                                   // Base damage of E
-                                                   ((count - 1)
-                                                    * (new double[] { 10, 14, 19, 25, 32 }[level]
-                                                       + // Base damage per spear
-                                                       new double[] { 0.2, 0.225, 0.25, 0.275, 0.3 }[
-                                                           level]
-                                                       * source.TotalAttackDamage));
-                                            // Damage multiplier per spear
-                                        }
-                                        return 0;
+                                        return GetRendDamage(source, target);
                                     }
                             },
                     });
@@ -6990,6 +6975,40 @@ namespace LeagueSharp.Common
         #endregion
 
         #region Public Methods and Operators
+
+        public static float GetRendDamage(AIHeroClient source, AIHeroClient target)
+        {
+            return GetRendDamage(source, target, -1);
+        }
+
+        private static readonly float[] RawRendDamage = { 20, 30, 40, 50, 60 };
+        private static readonly float[] RawRendDamageMultiplier = { 0.6f, 0.6f, 0.6f, 0.6f, 0.6f };
+        private static readonly float[] RawRendDamagePerSpear = { 5, 9, 14, 20, 27 };
+        private static readonly float[] RawRendDamagePerSpearMultiplier = { 0.15f, 0.18f, 0.21f, 0.24f, 0.27f };
+
+        public static float GetRendDamage(Obj_AI_Base source, Obj_AI_Base target, int customStacks = -1, BuffInstance rendBuff = null)
+        {
+            return EloBuddy.SDK.Damage.CalculateDamageOnUnit(source, target, EloBuddy.DamageType.Physical, GetRawRendDamage(source, target, customStacks, rendBuff)) * (Player.Instance.HasBuff("SummonerExhaustSlow") ? 0.6f : 1);
+        }
+
+        private static BuffInstance GetRendBuffInternal(Obj_AI_Base target)
+        {
+            return target.Buffs.Find(b => b.Caster.IsMe && b.IsValid && b.DisplayName == "KalistaExpungeMarker");
+        }
+
+        public static float GetRawRendDamage(Obj_AI_Base source, Obj_AI_Base target, int customStacks = -1, BuffInstance rendBuff = null)
+        {
+            rendBuff = rendBuff ?? GetRendBuffInternal(target);
+            var stacks = (customStacks > -1 ? customStacks : rendBuff != null ? rendBuff.Count : 0) - 1;
+            if (stacks > -1)
+            {
+                var index = source.Spellbook.GetSpell(SpellSlot.E).Level - 1;
+                return RawRendDamage[index] + stacks * RawRendDamagePerSpear[index] +
+                       source.TotalAttackDamage * (RawRendDamageMultiplier[index] + stacks * RawRendDamagePerSpearMultiplier[index]);
+            }
+
+            return 0;
+        }
 
         private static int TwitchStack(Obj_AI_Base target) // Doctor
         {
