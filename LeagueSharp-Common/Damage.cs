@@ -6131,9 +6131,7 @@ namespace LeagueSharp.Common
                                 Slot = SpellSlot.E, DamageType = DamageType.Physical,
                                 Damage =
                                     (source, target, level) =>
-                                    (from buff in target.Buffs
-                                     where buff.DisplayName.ToLower() == "twitchdeadlyvenom"
-                                     select buff.Count).FirstOrDefault()
+                                    TwitchStack(target)
                                     * (new double[] { 15, 20, 25, 30, 35 }[level]
                                        + 0.2 * source.TotalMagicalDamage
                                        + 0.25 * source.FlatPhysicalDamageMod)
@@ -6992,6 +6990,19 @@ namespace LeagueSharp.Common
         #endregion
 
         #region Public Methods and Operators
+
+        private static int TwitchStack(Obj_AI_Base target) // Doctor
+        {
+            var Ec = 0;
+            for (var t = 1; t < 7; t++)
+            {
+                if (ObjectManager.Get<Obj_GeneralParticleEmitter>().Any(s => s.Position.Distance(target.ServerPosition) <= 175 && s.Name == "twitch_poison_counter_0" + t + ".troy"))
+                {
+                    Ec = t;
+                }
+            }
+            return Ec;
+        }
 
         /// <summary>
         ///     Calculates the damage.
