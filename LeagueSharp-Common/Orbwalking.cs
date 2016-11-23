@@ -1797,7 +1797,7 @@ namespace LeagueSharp.Common
                     }
 
                     var target = this.GetTarget();
-                    Orbwalk(target, this._orbwalkingPoint.To2D().IsValid() ? this._orbwalkingPoint : Game.CursorPos,
+                    Orbwalk(target, GetOrbwalkingPoint().IsValid() ? GetOrbwalkingPoint() : Game.CursorPos,
                         _config.Item("ExtraWindup").GetValue<Slider>().Value,
                         Math.Max(_config.Item("HoldPosRadius").GetValue<Slider>().Value, 30));
                 }
