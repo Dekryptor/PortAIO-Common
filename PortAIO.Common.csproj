@@ -93,6 +93,7 @@
     <Compile Include="LeagueSharp-Common\Data\ItemData.cs" />
     <Compile Include="LeagueSharp-Common\Data\MasteryData.cs" />
     <Compile Include="LeagueSharp-Common\Data\SpellDatabase.cs" />
+    <Compile Include="LeagueSharp-Common\DrawMin.cs" />
     <Compile Include="LeagueSharp-Common\FakeClicks.cs" />
     <Compile Include="LeagueSharp-Common\GamePacket.cs" />
     <Compile Include="LeagueSharp-Common\Geometry.cs" />

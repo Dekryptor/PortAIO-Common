@@ -149,7 +149,7 @@
                 Render.Circle.DrawCircle(center, radius, color, thickness);
                 return;
             }
-            // Drawing on minimap disabled
+            DrawMini.DrawCricleMinimap(center, radius, color, thickness, quality);
         }
 
         public static List<AIHeroClient> GetAlliesInRange(this Obj_AI_Base unit, float range)
@@ -1129,10 +1129,13 @@
                 }
 
                 return new Map
-                           {
-                               Name = "Unknown", ShortName = "unknown", Type = MapType.Unknown, Grid = new Vector2(0, 0),
-                               StartingLevel = 1
-                           };
+                {
+                    Name = "Unknown",
+                    ShortName = "unknown",
+                    Type = MapType.Unknown,
+                    Grid = new Vector2(0, 0),
+                    StartingLevel = 1
+                };
             }
 
             #endregion
