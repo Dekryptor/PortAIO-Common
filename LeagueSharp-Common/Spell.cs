@@ -1027,7 +1027,10 @@
             this.ChargeDuration = (int)(deltaT * 1000);
             this._chargedCastedT = 0;
 
-            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(deltaT * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
+            skillshot = null;
+            IsSkillshot = false;
+
+            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange, (int)(deltaT * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
             charge.AllowedCollisionCount = int.MaxValue;
 
             Obj_AI_Base.OnSpellCast += this.AIHeroClient_OnProcessSpellCast;
@@ -1357,7 +1360,7 @@
             {
                 if (this.IsCharging)
                 {
-                    ShootChargedSpell(this.Slot, prediction2.CastPosition);
+                    ShootChargedSpell(this.Slot, charge.GetPrediction(unit).CastPosition);
                 }
                 else
                 {
