@@ -91,7 +91,7 @@ namespace LeagueSharp.Common
         /// </summary>
         public static void Initialize()
         {
-            Game_OnGameLoad();
+            //Game_OnGameLoad();
         }
 
         public static void Shutdown()
