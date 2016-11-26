@@ -548,7 +548,7 @@
             {
                 return false;
             }
-            return this.Slot.IsReady() && Player.CastSpell(this.Slot, toPosition, fromPosition);
+            return this.Slot.IsReady() && ObjectManager.Player.Spellbook.CastSpell(this.Slot, toPosition, fromPosition);
         }
 
         /// <summary>
@@ -575,7 +575,7 @@
         public bool Cast(Vector3 position, bool packetCast = false)
         {
             LastCastAttemptT = Utils.TickCount;
-            Player.CastSpell(Slot, position);
+            ObjectManager.Player.Spellbook.CastSpell(Slot, position);
             return true;
         }
 
@@ -583,7 +583,7 @@
         {
             if (!this.IsChanneling && Utils.TickCount - this._cancelSpellIssue > 400 + Game.Ping)
             {
-                Player.CastSpell(this.Slot);
+                ObjectManager.Player.Spellbook.CastSpell(this.Slot);
                 this._cancelSpellIssue = Utils.TickCount;
             }
         }
@@ -592,7 +592,7 @@
         {
             if (!this.IsChanneling && Utils.TickCount - this._cancelSpellIssue > 400 + Game.Ping)
             {
-                Player.CastSpell(this.Slot, position);
+                ObjectManager.Player.Spellbook.CastSpell(this.Slot, position);
                 this._cancelSpellIssue = Utils.TickCount;
             }
         }
@@ -666,11 +666,11 @@
 
             if (packetCast)
             {
-                return Player.CastSpell(this.Slot, unit, false);
+                return ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit, false);
             }
             else
             {
-                return Player.CastSpell(this.Slot, unit);
+                return ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit);
             }
         }
 
@@ -1107,7 +1107,7 @@
         {
             if (!this.IsCharging && Utils.TickCount - this._chargedReqSentT > 400 + Game.Ping)
             {
-                Player.CastSpell(this.Slot, position);
+                ObjectManager.Player.Spellbook.CastSpell(this.Slot, position);
                 this._chargedReqSentT = Utils.TickCount;
             }
         }
@@ -1196,7 +1196,7 @@
         {
             position.Z = NavMesh.GetHeightForPosition(position.X, position.Y);
             ObjectManager.Player.Spellbook.UpdateChargeableSpell(slot, position, releaseCast, false);
-            Player.CastSpell(slot, position, false);
+            ObjectManager.Player.Spellbook.CastSpell(slot, position, false);
         }
 
         /// <summary>
@@ -1242,7 +1242,7 @@
                 this.LastCastAttemptT = Utils.TickCount;
 
                 //Cant cast the Spell.
-                if (!Player.CastSpell(this.Slot, unit))
+                if (!ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit))
                 {
                     return CastStates.NotCasted;
                 }
