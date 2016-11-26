@@ -695,8 +695,6 @@
             }
 
             var style = this.FontStyle;
-            style &= ~FontStyle.Strikeout;
-            style &= ~FontStyle.Underline;
 
             var font = MenuDrawHelper.GetFont(style);
 
@@ -842,37 +840,6 @@
                 new Rectangle((int)this.Position.X + 5, (int)this.Position.Y, this.Width, this.Height),
                 FontDrawFlags.VerticalCenter,
                 this.FontColor);
-
-            var textWidth = font.MeasureText(null, (this.DisplayName));
-            if ((this.FontStyle & FontStyle.Strikeout) != 0)
-            {
-                Drawing.DrawLine(
-                    this.Position.X + 5,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 2f),
-                    this.Position.X + 5 + textWidth.Width,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 2f),
-                    1f,
-                    System.Drawing.Color.FromArgb(
-                        this.FontColor.A,
-                        this.FontColor.R,
-                        this.FontColor.G,
-                        this.FontColor.B));
-            }
-
-            if ((this.FontStyle & FontStyle.Underline) != 0)
-            {
-                Drawing.DrawLine(
-                    this.Position.X + 5,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 1.5f),
-                    this.Position.X + 5 + textWidth.Width,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 1.5f),
-                    1f,
-                    System.Drawing.Color.FromArgb(
-                        this.FontColor.A,
-                        this.FontColor.R,
-                        this.FontColor.G,
-                        this.FontColor.B));
-            }
         }
 
         /// <summary>
