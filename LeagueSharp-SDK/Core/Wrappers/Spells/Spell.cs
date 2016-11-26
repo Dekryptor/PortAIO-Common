@@ -1175,7 +1175,7 @@ namespace LeagueSharp.SDK
             this.ChargeDuration = (int)(deltaT * 1000);
             this.chargedCastedT = 0;
 
-            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(deltaT * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
+            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(deltaT * 1000), Convert.ToInt32(castDelay * 1000), spellSpeed, spellWidth);
             charge.AllowedCollisionCount = int.MaxValue;
 
             Obj_AI_Base.OnSpellCast += this.OnProcessSpellCast;
