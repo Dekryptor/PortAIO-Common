@@ -23,6 +23,7 @@
         /// </summary>
         internal static Font Font;
 
+        /*
         /// <summary>
         ///     The bold font.
         /// </summary>
@@ -37,7 +38,7 @@
         ///     The bold and italic font.
         /// </summary>
         internal static Font FontBoldItalic;
-
+        */
         #endregion
 
         #region Constructors and Destructors
@@ -51,51 +52,20 @@
             var faceName = Menu.Root.Item("FontName").GetValue<StringList>().SelectedValue;
             var height = Menu.Root.Item("FontSize").GetValue<Slider>().Value;
             var outputPercision = FontPrecision.Default;
-            var quality =
-                (FontQuality)
-                Enum.Parse(
-                    typeof(FontQuality),
-                    Menu.Root.Item("FontQuality").GetValue<StringList>().SelectedValue,
-                    true);
+            var quality = (FontQuality)Enum.Parse(typeof(FontQuality), Menu.Root.Item("FontQuality").GetValue<StringList>().SelectedValue, true);
 
             Font = new Font(
                 device,
-                new FontDescription
-                { FaceName = faceName, Height = height, OutputPrecision = outputPercision, Quality = quality });
-
-            FontBold = new Font(
-                device,
-                new FontDescription
-                {
-                    FaceName = faceName,
-                    Height = height,
-                    OutputPrecision = outputPercision,
-                    Weight = FontWeight.Bold,
-                    Quality = quality
-                });
-
-            FontItalic = new Font(
-                device,
-                new FontDescription
-                {
-                    FaceName = faceName,
-                    Height = height,
-                    OutputPrecision = outputPercision,
-                    Italic = true,
-                    Quality = quality
-                });
-
-            FontBoldItalic = new Font(
-                device,
-                new FontDescription
-                {
-                    FaceName = faceName,
-                    Height = height,
-                    OutputPrecision = outputPercision,
-                    Weight = FontWeight.Bold,
-                    Italic = true,
-                    Quality = quality
-                });
+                height,
+                0,
+                FontWeight.DoNotCare,
+                0,
+                false,
+                FontCharacterSet.Default,
+                outputPercision,
+                quality,
+                FontPitchAndFamily.DontCare | FontPitchAndFamily.Decorative | FontPitchAndFamily.Modern,
+                faceName);
 
             Drawing.OnPreReset += OnPreReset;
             Drawing.OnPostReset += OnPostReset;
@@ -105,7 +75,7 @@
         #endregion
 
         internal static Font GetFont(FontStyle fontStyle)
-        {
+        {/*
             switch (fontStyle)
             {
                 case FontStyle.Bold:
@@ -115,8 +85,9 @@
                 case FontStyle.Bold | FontStyle.Italic:
                     return FontBoldItalic;
                 default:
-                    return Font;
-            }
+                */
+            return Font;
+            //}
         }
 
         #region Methods
@@ -139,15 +110,10 @@
         internal static void DrawArrow(string s, Vector2 position, MenuItem item, Color color)
         {
             DrawBox(position, item.Height, item.Height, Color.FromArgb(0, 37, 53), 1, color);
-            Font.DrawText(
-                null,
-                s,
-                new Rectangle((int)(position.X), (int)item.Position.Y, item.Height, item.Height),
-                FontDrawFlags.VerticalCenter | FontDrawFlags.Center,
-                new ColorBGRA(255, 255, 255, 255));
+            Font.DrawText(null, s, new Rectangle((int)(position.X), (int)item.Position.Y, item.Height, item.Height), FontDrawFlags.VerticalCenter | FontDrawFlags.Center, new ColorBGRA(255, 255, 255, 255));
         }
 
-        private static Line Line = new Line(EloBuddy.Drawing.Direct3DDevice) { GLLines = true };
+        private static Line Line = new Line(Drawing.Direct3DDevice) { GLLines = true };
 
         /// <summary>
         ///     Draws a box.
@@ -249,7 +215,9 @@
                 on ? Color.FromArgb(1, 169, 234) : Color.FromArgb(37, 37, 37),
                 1,
                 Color.Black);
+
             var s = on ? "ON" : "OFF";
+
             Font.DrawText(
                 null,
                 s,
@@ -320,7 +288,13 @@
             var percentage = 100 * (value - min) / (max - min);
             var x = position.X + 3 + (percentage * (width - 3)) / 100f;
             var x2D = 3 + (percentage * (width - 3)) / 100;
-            Drawing.DrawLine(x - 2, position.Y + 1, x - 2, position.Y + item.Height, 2, Color.FromArgb(0, 74, 103));
+
+            Line.Width = 2;
+            Line.Begin();
+            Line.Draw(
+                new[] { new Vector2(x, position.Y + 1), new Vector2(x, position.Y + item.Height) }, new ColorBGRA(0, 74, 103, 255));
+            Line.End();
+
             DrawBox(
                 new Vector2(position.X, position.Y),
                 x2D - 2,
@@ -432,6 +406,7 @@
                 Font = null;
             }
 
+            /*
             if (FontBold != null)
             {
                 FontBold.OnLostDevice();
@@ -452,6 +427,7 @@
                 FontItalic.Dispose();
                 FontItalic = null;
             }
+            */
         }
 
         /// <summary>
@@ -462,9 +438,11 @@
         {
             Line.OnResetDevice();
             Font.OnResetDevice();
+            /*
             FontBold.OnResetDevice();
             FontBoldItalic.OnResetDevice();
             FontItalic.OnResetDevice();
+            */
         }
 
         /// <summary>
@@ -477,9 +455,11 @@
         {
             Line.OnLostDevice();
             Font.OnLostDevice();
+            /*
             FontBold.OnLostDevice();
             FontItalic.OnLostDevice();
             FontBoldItalic.OnLostDevice();
+            */
         }
 
         #endregion
