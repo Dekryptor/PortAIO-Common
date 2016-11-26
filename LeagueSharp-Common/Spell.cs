@@ -331,16 +331,7 @@
         ///     Gets a value indicating whether this instance is charging a charged spell.
         /// </summary>
         /// <value><c>true</c> if this instance is charging  a charged spell; otherwise, <c>false</c>.</value>
-        public bool IsCharging
-        {
-            get
-            {
-                if (!this.Slot.IsReady()) return false;
-
-                return ObjectManager.Player.HasBuff(this.ChargedBuffName)
-                       || Utils.TickCount - this._chargedCastedT < 300 + Game.Ping;
-            }
-        }
+        public bool IsCharging;
 
 
         /// <summary>
@@ -412,11 +403,7 @@
 
                 if (this.IsCharging)
                 {
-                    return this.ChargedMinRange
-                           + Math.Min(
-                               this.ChargedMaxRange - this.ChargedMinRange,
-                               (Utils.TickCount - this._chargedCastedT) * (this.ChargedMaxRange - this.ChargedMinRange)
-                               / this.ChargeDuration - 150);
+                    return charge.Range;
                 }
 
                 return this.ChargedMaxRange;
@@ -598,7 +585,7 @@
             {
                 if (this.IsCharging)
                 {
-                    ShootChargedSpell(this.Slot, position);
+                    Player.CastSpell(Slot, position);
                 }
                 else
                 {
@@ -886,7 +873,7 @@
         /// <returns>PredictionOutput.</returns>
         public PredictionOutput GetPrediction(Obj_AI_Base unit, bool aoe = false, float overrideRange = -1f, CollisionableObjects[] collisionable = null, int minTargets = 2)
         {
-            var pred = 
+            var pred =
                 Prediction.GetPrediction(
                     new PredictionInput
                     {
@@ -903,22 +890,18 @@
                         CollisionObjects = collisionable ?? new[] { CollisionableObjects.Heroes, CollisionableObjects.Minions }
                     });
 
-            if (skillshot != null && IsSkillshot)
-            {
-                var a =  skillshot.GetPrediction(unit);
-                return new PredictionOutput() { CastPosition = a.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = a.UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount};
-            }
-            else if (IsChargedSpell && charge != null)
+            if (IsChargedSpell && charge != null)
             {
                 var b = charge.GetPrediction(unit);
                 return new PredictionOutput() { CastPosition = b.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = b.UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
-            else
+            else if (skillshot != null && IsSkillshot)
             {
-                return pred;
+                var a = skillshot.GetPrediction(unit);
+                return new PredictionOutput() { CastPosition = a.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = a.UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
-            Console.WriteLine("Please report this to Berb.");
-            return new PredictionOutput();
+
+            return pred;
         }
         /// LOI cho nay
         /// <summary>
@@ -1023,19 +1006,23 @@
             this.ChargedSpellName = spellName;
             this.ChargedBuffName = buffName;
             this.ChargedMinRange = minRange;
-            this.ChargedMaxRange = maxRange;
+            this.ChargedMaxRange = maxRange - 75;
             this.ChargeDuration = (int)(deltaT * 1000);
             this._chargedCastedT = 0;
 
             skillshot = null;
             IsSkillshot = false;
 
-            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange, (int)(deltaT * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
+            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(deltaT * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
             charge.AllowedCollisionCount = int.MaxValue;
 
-            Obj_AI_Base.OnSpellCast += this.AIHeroClient_OnProcessSpellCast;
-            Spellbook.OnUpdateChargeableSpell += this.Spellbook_OnUpdateChargedSpell;
-            Spellbook.OnCastSpell += this.SpellbookOnCastSpell;
+            Game.OnUpdate += (args) =>
+            {
+                if (charge != null)
+                {
+                    IsCharging = charge.IsCharging;
+                }
+            };
         }
 
         /// <summary>
@@ -1146,11 +1133,7 @@
         /// </summary>
         public void StartCharging()
         {
-            if (!this.IsCharging && Utils.TickCount - this._chargedReqSentT > 400 + Game.Ping)
-            {
-                ObjectManager.Player.Spellbook.CastSpell(this.Slot);
-                this._chargedReqSentT = Utils.TickCount;
-            }
+            charge.StartCharging();
         }
 
         /// <summary>
@@ -1248,6 +1231,7 @@
         /// <param name="releaseCast">if set to <c>true</c> [release cast].</param>
         private static void ShootChargedSpell(SpellSlot slot, Vector3 position, bool releaseCast = true)
         {
+            Console.WriteLine("Shooting Charged Spell");
             position.Z = NavMesh.GetHeightForPosition(position.X, position.Y);
             ObjectManager.Player.Spellbook.UpdateChargeableSpell(slot, position, releaseCast, false);
             ObjectManager.Player.Spellbook.CastSpell(slot, position, false);
@@ -1325,42 +1309,28 @@
                 return CastStates.NotEnoughTargets;
             }
 
-            //Skillshot collides.
-            if (prediction.CollisionObjects.Count() > 0)
-            {
-                return CastStates.Collision;
-            }
-
             //Target out of range.
             if (this.RangeCheckFrom.Distance(prediction2.CastPosition, true) > this.RangeSqr)
             {
                 return CastStates.OutOfRange;
             }
 
-            if (IsChargedSpell)
+            if (prediction2.HitChance < convertHitChance(this.MinHitChance)
+                || (exactHitChance && prediction2.HitChance != convertHitChance(this.MinHitChance)))
             {
-                if (prediction.Hitchance < this.MinHitChance
-                    || (exactHitChance && prediction.Hitchance != this.MinHitChance))
-                {
-                    return CastStates.LowHitChance;
-                }
-            }
-            else
-            {
-                if (prediction2.HitChance < convertHitChance(this.MinHitChance)
-                    || (exactHitChance && prediction2.HitChance != convertHitChance(this.MinHitChance)))
-                {
-                    return CastStates.LowHitChance;
-                }
+                return CastStates.LowHitChance;
             }
 
             this.LastCastAttemptT = Utils.TickCount;
 
-            if (this.IsChargedSpell)
+            if (this.IsChargedSpell && charge != null)
             {
                 if (this.IsCharging)
                 {
-                    ShootChargedSpell(this.Slot, charge.GetPrediction(unit).CastPosition);
+                    if (!charge.Cast(charge.GetPrediction(unit).CastPosition))
+                    {
+                        return CastStates.NotCasted;
+                    }
                 }
                 else
                 {
@@ -1368,15 +1338,11 @@
                 }
             }
 
-            if (this.IsSkillshot)
+            if (this.IsSkillshot && skillshot != null)
             {
-                if (ObjectManager.Player.Spellbook.CastSpell(Slot, prediction3.CastPosition))
+                if (!skillshot.Cast(skillshot.GetPrediction(unit).CastPosition))
                 {
-                    return CastStates.SuccessfullyCasted;
-                }
-                else if (skillshot.Cast(unit))
-                {
-                    return CastStates.SuccessfullyCasted;
+                    return CastStates.NotCasted;
                 }
             }
 
@@ -1422,19 +1388,6 @@
                 return EloBuddy.SDK.Enumerations.HitChance.High;
             }
             return EloBuddy.SDK.Enumerations.HitChance.Low;
-        }
-
-        /// <summary>
-        ///     Fired when the game processes a spell cast.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="args">The <see cref="GameObjectProcessSpellCastEventArgs" /> instance containing the event data.</param>
-        private void AIHeroClient_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
-        {
-            if (sender.IsMe && args.SData.Name == this.ChargedSpellName)
-            {
-                this._chargedCastedT = Utils.TickCount;
-            }
         }
 
         private void OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
@@ -1509,40 +1462,6 @@
             if (args.Msg == 517)
             {
                 this.IsChanneling = false;
-            }
-        }
-
-        /// <summary>
-        ///     Fired when the charged spell is updated.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="args">The <see cref="SpellbookUpdateChargedSpellEventArgs" /> instance containing the event data.</param>
-        void Spellbook_OnUpdateChargedSpell(Spellbook sender, SpellbookUpdateChargeableSpellEventArgs args)
-        {
-            if (sender.Owner.IsMe && Utils.TickCount - this._chargedReqSentT < 3000 && args.ReleaseCast)
-            {
-                args.Process = false;
-            }
-        }
-
-        /// <summary>
-        ///     Fired when the spellbook casts a spell.
-        /// </summary>
-        /// <param name="spellbook">The spellbook.</param>
-        /// <param name="args">The <see cref="SpellbookCastSpellEventArgs" /> instance containing the event data.</param>
-        private void SpellbookOnCastSpell(Spellbook spellbook, SpellbookCastSpellEventArgs args)
-        {
-            if (args.Slot != this.Slot)
-            {
-                return;
-            }
-
-            if ((Utils.TickCount - this._chargedReqSentT > 500))
-            {
-                if (this.IsCharging)
-                {
-                    this.Cast(args.StartPosition.To2D());
-                }
             }
         }
 
