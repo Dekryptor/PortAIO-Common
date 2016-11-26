@@ -574,46 +574,9 @@
         /// <returns><c>true</c> if the spell was casted sucessfully, <c>false</c> otherwise.</returns>
         public bool Cast(Vector3 position, bool packetCast = false)
         {
-            if (!this.Slot.IsReady())
-            {
-                return false;
-            }
-
-            this.LastCastAttemptT = Utils.TickCount;
-
-            if (this.IsChargedSpell)
-            {
-                if (this.IsCharging)
-                {
-                    Player.CastSpell(Slot, position);
-                }
-                else
-                {
-                    this.StartCharging();
-                }
-            }
-
-            else if (this.IsChannelTypeSpell)
-            {
-                if (this.TargetSpellCancel)
-                {
-                    this.CastCancelSpell(position);
-                }
-                else
-                {
-                    this.CastCancelSpell();
-                }
-            }
-
-            else if (packetCast)
-            {
-                return Player.CastSpell(this.Slot, position, false);
-            }
-            else
-            {
-                return Player.CastSpell(this.Slot, position);
-            }
-            return false;
+            LastCastAttemptT = Utils.TickCount;
+            Player.CastSpell(Slot, position);
+            return true;
         }
 
         public void CastCancelSpell()
