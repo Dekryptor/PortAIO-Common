@@ -62,8 +62,8 @@
         /// </summary>
         private Vector3 _from;
 
-        public EloBuddy.SDK.Spell.Chargeable charge { get; private set; }
-        public EloBuddy.SDK.Spell.Skillshot skillshot { get; private set; }
+        public EloBuddy.SDK.Spell.Chargeable charge { get; set; }
+        public EloBuddy.SDK.Spell.Skillshot skillshot { get; set; }
 
         /// <summary>
         ///     The range of the spell
@@ -548,7 +548,7 @@
             {
                 return false;
             }
-            return this.Slot.IsReady() && ObjectManager.Player.Spellbook.CastSpell(this.Slot, toPosition, fromPosition);
+            return this.Slot.IsReady() && Player.CastSpell(this.Slot, toPosition, fromPosition);
         }
 
         /// <summary>
@@ -607,11 +607,11 @@
 
             else if (packetCast)
             {
-                return ObjectManager.Player.Spellbook.CastSpell(this.Slot, position, false);
+                return Player.CastSpell(this.Slot, position, false);
             }
             else
             {
-                return ObjectManager.Player.Spellbook.CastSpell(this.Slot, position);
+                return Player.CastSpell(this.Slot, position);
             }
             return false;
         }
@@ -620,7 +620,7 @@
         {
             if (!this.IsChanneling && Utils.TickCount - this._cancelSpellIssue > 400 + Game.Ping)
             {
-                ObjectManager.Player.Spellbook.CastSpell(this.Slot);
+                Player.CastSpell(this.Slot);
                 this._cancelSpellIssue = Utils.TickCount;
             }
         }
@@ -629,7 +629,7 @@
         {
             if (!this.IsChanneling && Utils.TickCount - this._cancelSpellIssue > 400 + Game.Ping)
             {
-                ObjectManager.Player.Spellbook.CastSpell(this.Slot, position);
+                Player.CastSpell(this.Slot, position);
                 this._cancelSpellIssue = Utils.TickCount;
             }
         }
@@ -703,11 +703,11 @@
 
             if (packetCast)
             {
-                return ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit, false);
+                return Player.CastSpell(this.Slot, unit, false);
             }
             else
             {
-                return ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit);
+                return Player.CastSpell(this.Slot, unit);
             }
         }
 
@@ -998,7 +998,7 @@
         /// <param name="minRange">The minimum range.</param>
         /// <param name="maxRange">The maximum range.</param>
         /// <param name="deltaT">The delta time.</param>
-        public void SetCharged(int minRange, int maxRange, float fullyChargedTime, double castDelay = 0.25, int? spellSpeed = null, int? spellWidth = null)
+        public void SetCharged(int minRange, int maxRange, float fullyChargedTime, double castDelay = 0.25, int? spellSpeed = int.MaxValue, int? spellWidth = 100)
         {
             ChargedMinRange = minRange;
             ChargedMaxRange = maxRange;
@@ -1009,8 +1009,7 @@
 
             skillshot = null;
 
-            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(fullyChargedTime * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
-            charge.AllowedCollisionCount = int.MaxValue;
+            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, ((uint)maxRange - 75), (int)(fullyChargedTime * 1000), Convert.ToInt32(castDelay * 1000), spellSpeed, spellWidth) { AllowedCollisionCount = int.MaxValue };
 
             Game.OnUpdate += (args) =>
             {
@@ -1145,7 +1144,7 @@
         {
             if (!this.IsCharging && Utils.TickCount - this._chargedReqSentT > 400 + Game.Ping)
             {
-                ObjectManager.Player.Spellbook.CastSpell(this.Slot, position);
+                Player.CastSpell(this.Slot, position);
                 this._chargedReqSentT = Utils.TickCount;
             }
         }
@@ -1234,7 +1233,7 @@
         {
             position.Z = NavMesh.GetHeightForPosition(position.X, position.Y);
             ObjectManager.Player.Spellbook.UpdateChargeableSpell(slot, position, releaseCast, false);
-            ObjectManager.Player.Spellbook.CastSpell(slot, position, false);
+            Player.CastSpell(slot, position, false);
         }
 
         /// <summary>
@@ -1280,7 +1279,7 @@
                 this.LastCastAttemptT = Utils.TickCount;
 
                 //Cant cast the Spell.
-                if (!ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit))
+                if (!Player.CastSpell(this.Slot, unit))
                 {
                     return CastStates.NotCasted;
                 }
@@ -1292,16 +1291,12 @@
             {
                 if (!charge.IsInRange(unit))
                 {
-                    Console.WriteLine("1");
                     return CastStates.OutOfRange;
                 }
                 if (minTargets != -1 && charge.GetPrediction(unit).CollisionObjects.Count() < minTargets)
                 {
-                    Console.WriteLine("2");
                     return CastStates.NotEnoughTargets;
                 }
-                //Console.WriteLine("Pred2 : " + charge.GetPrediction(unit).HitChance);
-                //Console.WriteLine("Pred2CVS : " + convertHitChance(this.MinHitChance));
             }
             else
             {
@@ -1313,8 +1308,6 @@
                 {
                     return CastStates.NotEnoughTargets;
                 }
-                Console.WriteLine("Pred2 : " + skillshot.GetPrediction(unit).HitChance);
-                Console.WriteLine("Pred2CVS : " + convertHitChance(this.MinHitChance));
             }
 
             this.LastCastAttemptT = Utils.TickCount;
