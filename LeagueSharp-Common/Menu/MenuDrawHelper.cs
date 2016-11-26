@@ -32,7 +32,7 @@
         ///     The italic font.
         /// </summary>
         internal static Font FontItalic;
-        
+
         /// <summary>
         ///     The bold and italic font.
         /// </summary>
@@ -61,31 +61,41 @@
             Font = new Font(
                 device,
                 new FontDescription
-                    { FaceName = faceName, Height = height, OutputPrecision = outputPercision, Quality = quality });
+                { FaceName = faceName, Height = height, OutputPrecision = outputPercision, Quality = quality });
 
             FontBold = new Font(
                 device,
                 new FontDescription
-                    {
-                        FaceName = faceName, Height = height, OutputPrecision = outputPercision, Weight = FontWeight.Bold,
-                        Quality = quality
-                    });
+                {
+                    FaceName = faceName,
+                    Height = height,
+                    OutputPrecision = outputPercision,
+                    Weight = FontWeight.Bold,
+                    Quality = quality
+                });
 
             FontItalic = new Font(
                 device,
                 new FontDescription
-                    {
-                        FaceName = faceName, Height = height, OutputPrecision = outputPercision, Italic = true,
-                        Quality = quality
-                    });
+                {
+                    FaceName = faceName,
+                    Height = height,
+                    OutputPrecision = outputPercision,
+                    Italic = true,
+                    Quality = quality
+                });
 
             FontBoldItalic = new Font(
                 device,
                 new FontDescription
-                    {
-                        FaceName = faceName, Height = height, OutputPrecision = outputPercision, Weight = FontWeight.Bold,
-                        Italic = true, Quality = quality
-                    });
+                {
+                    FaceName = faceName,
+                    Height = height,
+                    OutputPrecision = outputPercision,
+                    Weight = FontWeight.Bold,
+                    Italic = true,
+                    Quality = quality
+                });
 
             Drawing.OnPreReset += OnPreReset;
             Drawing.OnPostReset += OnPostReset;
@@ -137,6 +147,8 @@
                 new ColorBGRA(255, 255, 255, 255));
         }
 
+        private static readonly Line Line = new Line(EloBuddy.Drawing.Direct3DDevice) { GLLines = true };
+
         /// <summary>
         ///     Draws a box.
         /// </summary>
@@ -166,26 +178,53 @@
             int borderwidth,
             Color borderColor)
         {
-            Drawing.DrawLine(position.X, position.Y + 16, position.X + width, position.Y + 16, height, color);
+            SharpDX.Color aColor = new SharpDX.Color(Color.FromArgb(color.ToArgb()).R, Color.FromArgb(color.ToArgb()).G, Color.FromArgb(color.ToArgb()).B, Color.FromArgb(color.ToArgb()).A);
+            SharpDX.Color contourColor = new SharpDX.Color(Color.FromArgb(borderColor.ToArgb()).R, Color.FromArgb(borderColor.ToArgb()).G, Color.FromArgb(borderColor.ToArgb()).B, Color.FromArgb(borderColor.ToArgb()).A);
+
+            Line.Width = width;
+            Line.Begin();
+            Line.Draw(
+                new[]
+                    {
+                            new Vector2((position.X + borderwidth) + (width / 2), position.Y),
+                            new Vector2((position.X + borderwidth) + (width / 2), position.Y + height)
+                    },
+                aColor);
+            Line.End();
 
             if (borderwidth > 0)
             {
-                Drawing.DrawLine(position.X, position.Y, position.X + width, position.Y, borderwidth, borderColor);
-                Drawing.DrawLine(
-                    position.X,
-                    position.Y + height,
-                    position.X + width,
-                    position.Y + height,
-                    borderwidth,
-                    borderColor);
-                Drawing.DrawLine(position.X, position.Y, position.X, position.Y + height, borderwidth, borderColor);
-                Drawing.DrawLine(
-                    position.X + width,
-                    position.Y,
-                    position.X + width,
-                    position.Y + height,
-                    borderwidth,
-                    borderColor);
+                Line.Width = 1f;
+                Line.Begin();
+                Line.Draw(
+                    new[]
+                        {
+                            new Vector2(position.X + borderwidth, position.Y),
+                            new Vector2(position.X + borderwidth + width, position.Y)
+                        },
+                    contourColor);
+                Line.Draw(
+                    new[]
+                        {
+                            new Vector2(position.X + borderwidth, position.Y + height),
+                            new Vector2(position.X + borderwidth + width, position.Y + height)
+                        },
+                    contourColor);
+                Line.Draw(
+                    new[]
+                        {
+                            new Vector2(position.X + borderwidth, position.Y),
+                            new Vector2(position.X + borderwidth, position.Y + height)
+                        },
+                    contourColor);
+                Line.Draw(
+                    new[]
+                        {
+                            new Vector2(position.X + borderwidth + width, position.Y),
+                            new Vector2(position.X + borderwidth + width, position.Y + height)
+                        },
+                    contourColor);
+                Line.End();
             }
         }
 
