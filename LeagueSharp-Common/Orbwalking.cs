@@ -1277,7 +1277,7 @@ namespace LeagueSharp.Common
                     || mode == OrbwalkingMode.Freeze)
                 {
                     var MinionList =
-                        ObjectManager.Get<Obj_AI_Minion>()
+                        EntityManager.MinionsAndMonsters.EnemyMinions
                             .Where(minion => minion.IsValidTarget() && this.InAutoAttackRange(minion))
                             .OrderByDescending(minion => minion.CharData.BaseSkinName.Contains("Siege"))
                             .ThenBy(minion => minion.CharData.BaseSkinName.Contains("Super"))
@@ -1326,7 +1326,7 @@ namespace LeagueSharp.Common
                 }
 
                 //Forced target
-                if (this._forcedTarget.IsValidTarget() && this.InAutoAttackRange(this._forcedTarget))
+                if (this._forcedTarget != null && this._forcedTarget.IsValidTarget() && this.InAutoAttackRange(this._forcedTarget))
                 {
                     return this._forcedTarget;
                 }
@@ -1367,7 +1367,7 @@ namespace LeagueSharp.Common
                     if (mode != OrbwalkingMode.LaneClear || !this.ShouldWait())
                     {
                         var target = TargetSelector.GetTarget(-1, TargetSelector.DamageType.Physical);
-                        if (target.IsValidTarget() && this.InAutoAttackRange(target))
+                        if (target != null && target.IsValidTarget() && this.InAutoAttackRange(target))
                         {
                             return target;
                         }
@@ -1588,7 +1588,7 @@ namespace LeagueSharp.Common
                 {
                     if (!this.ShouldWait())
                     {
-                        if (this._prevMinion.IsValidTarget() && this.InAutoAttackRange(this._prevMinion))
+                        if (this._prevMinion != null && this._prevMinion.IsValidTarget() && this.InAutoAttackRange(this._prevMinion))
                         {
                             var predHealth = HealthPrediction.LaneClearHealthPrediction(
                                 this._prevMinion,
