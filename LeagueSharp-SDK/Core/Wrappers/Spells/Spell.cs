@@ -269,19 +269,7 @@ namespace LeagueSharp.SDK
         /// <summary>
         ///     Gets a value indicating whether is charging.
         /// </summary>
-        public bool IsCharging
-        {
-            get
-            {
-                if (!this.IsReady())
-                {
-                    return false;
-                }
-
-                return GameObjects.Player.HasBuff(this.ChargedBuffName)
-                       || Variables.TickCount - this.chargedCastedT < 300 + Game.Ping;
-            }
-        }
+        public bool IsCharging;
 
         /// <summary>
         ///     Gets or sets a value indicating whether is skill-shot.
@@ -317,11 +305,7 @@ namespace LeagueSharp.SDK
 
                 if (this.IsCharging)
                 {
-                    return this.ChargedMinRange
-                           + Math.Min(
-                               this.ChargedMaxRange - this.ChargedMinRange,
-                               ((Variables.TickCount - this.chargedCastedT)
-                                * (this.ChargedMaxRange - this.ChargedMinRange) / this.ChargeDuration) - 150);
+                    return charge.Range;
                 }
 
                 return this.ChargedMaxRange;
@@ -487,53 +471,44 @@ namespace LeagueSharp.SDK
                            : CastStates.SuccessfullyCasted;
             }
 
-            var prediction = this.GetPrediction(unit, areaOfEffect);
-            var prediction2 = (charge != null) ? charge.GetPrediction(unit) : skillshot.GetPrediction(unit);
-            var prediction3 = skillshot.GetPrediction(unit);
-
-            if (minTargets != -1 && prediction.AoeTargetsHitCount <= minTargets)
+            if (charge != null)
             {
-                return CastStates.NotEnoughTargets;
+                if (!charge.IsInRange(unit))
+                {
+                    return CastStates.OutOfRange;
+                }
+                if (minTargets != -1 && charge.GetPrediction(unit).CollisionObjects.Count() < minTargets)
+                {
+                    return CastStates.NotEnoughTargets;
+                }
             }
-
-            if (prediction.CollisionObjects.Count > 0)
+            else
             {
-                return CastStates.Collision;
-            }
-
-            if (this.RangeCheckFrom.DistanceSquared(prediction2.CastPosition) > this.RangeSqr)
-            {
-                return CastStates.OutOfRange;
-            }
-
-            if (prediction.Hitchance < ((tempHitChance == HitChance.None) ? this.MinHitChance : tempHitChance) || (exactHitChance && prediction.Hitchance != ((tempHitChance == HitChance.None) ? this.MinHitChance : tempHitChance)))
-            {
-                return CastStates.LowHitChance;
+                if (!skillshot.IsInRange(unit))
+                {
+                    return CastStates.OutOfRange;
+                }
+                if (minTargets != -1 && skillshot.GetPrediction(unit).CollisionObjects.Count() < minTargets)
+                {
+                    return CastStates.NotEnoughTargets;
+                }
             }
 
             this.LastCastAttemptT = Variables.TickCount;
 
-            if (this.IsChargedSpell)
+            if (this.IsChargedSpell && charge != null)
             {
-                if (this.IsCharging)
+                if (!charge.Cast(charge.GetPrediction(unit).CastPosition))
                 {
-                    ShootChargedSpell(this.Slot, prediction2.CastPosition);
-                }
-                else
-                {
-                    this.StartCharging();
+                    return CastStates.NotCasted;
                 }
             }
 
-            if (this.IsSkillshot)
+            if (this.IsSkillshot && skillshot != null)
             {
-                if (ObjectManager.Player.Spellbook.CastSpell(Slot, prediction3.CastPosition))
+                if (!skillshot.Cast(skillshot.GetPrediction(unit).CastPosition))
                 {
-                    return CastStates.SuccessfullyCasted;
-                }
-                else if (skillshot.Cast(unit))
-                {
-                    return CastStates.SuccessfullyCasted;
+                    return CastStates.NotCasted;
                 }
             }
 
@@ -1015,23 +990,16 @@ namespace LeagueSharp.SDK
                         AoE = aoe,
                         CollisionObjects = collisionable
                     });
+            if (IsChargedSpell && charge != null)
+            {
+                return new PredictionOutput() { CastPosition = charge.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = charge.GetPrediction(unit).UnitPosition, AoeHitCount = pred.AoeHitCount };
+            }
+            else if (skillshot != null && IsSkillshot)
+            {
+                return new PredictionOutput() { CastPosition = skillshot.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = skillshot.GetPrediction(unit).UnitPosition, AoeHitCount = pred.AoeHitCount };
+            }
 
-            if (skillshot != null && IsSkillshot)
-            {
-                var a = skillshot.GetPrediction(unit);
-                return new PredictionOutput() { CastPosition = a.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = a.UnitPosition, AoeHitCount = pred.AoeHitCount };
-            }
-            else if (IsChargedSpell && charge != null)
-            {
-                var b = charge.GetPrediction(unit);
-                return new PredictionOutput() { CastPosition = b.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = b.UnitPosition, AoeHitCount = pred.AoeHitCount };
-            }
-            else
-            {
-                return pred;
-            }
-            Console.WriteLine("Please report this to Berb.");
-            return new PredictionOutput();
+            return pred;
         }
 
         /// <summary>
@@ -1167,7 +1135,6 @@ namespace LeagueSharp.SDK
         /// </returns>
         public Spell SetCharged(string spellName, string buffName, int minRange, int maxRange, float deltaT, double castDelay = 0.25, int? spellSpeed = null, int? spellWidth = null)
         {
-            this.IsChargedSpell = true;
             this.ChargedSpellName = spellName;
             this.ChargedBuffName = buffName;
             this.ChargedMinRange = minRange;
@@ -1175,12 +1142,21 @@ namespace LeagueSharp.SDK
             this.ChargeDuration = (int)(deltaT * 1000);
             this.chargedCastedT = 0;
 
+            IsSkillshot = false;
+            IsChargedSpell = true;
+
+            skillshot = null;
+
             charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(deltaT * 1000), Convert.ToInt32(castDelay * 1000), spellSpeed, spellWidth);
             charge.AllowedCollisionCount = int.MaxValue;
 
-            Obj_AI_Base.OnSpellCast += this.OnProcessSpellCast;
-            Spellbook.OnUpdateChargeableSpell += this.Spellbook_OnUpdateChargedSpell;
-            Spellbook.OnCastSpell += this.SpellbookOnCastSpell;
+            Game.OnUpdate += (args) =>
+            {
+                if (charge != null)
+                {
+                    IsCharging = charge.IsCharging;
+                }
+            };
 
             return this;
         }
@@ -1357,8 +1333,10 @@ namespace LeagueSharp.SDK
         {
             this.From = fromVector3;
             this.RangeCheckFrom = rangeCheckFromVector3;
-            this.IsSkillshot = false;
-
+            skillshot = null;
+            charge = null;
+            IsSkillshot = false;
+            IsChargedSpell = false;
             return this;
         }
 
@@ -1367,13 +1345,7 @@ namespace LeagueSharp.SDK
         /// </summary>
         public void StartCharging()
         {
-            if (this.IsCharging || Variables.TickCount - this.chargedReqSentT <= 400 + Game.Ping)
-            {
-                return;
-            }
-
-            GameObjects.Player.Spellbook.CastSpell(this.Slot);
-            this.chargedReqSentT = Variables.TickCount;
+            charge.StartCharging();
         }
 
         /// <summary>
@@ -1512,66 +1484,6 @@ namespace LeagueSharp.SDK
             GameObjects.Player.Spellbook.UpdateChargeableSpell(slot, position, releaseCast, false);
             GameObjects.Player.Spellbook.CastSpell(slot, position, false);
         }
-
-        /// <summary>
-        ///     On Process Spell Cast event catch.
-        /// </summary>
-        /// <param name="sender">
-        ///     <see cref="Obj_AI_Base" /> sender
-        /// </param>
-        /// <param name="args">
-        ///     Process Spell Cast Data
-        /// </param>
-        private void OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
-        {
-            if (sender.IsMe && args.SData.Name == this.ChargedSpellName)
-            {
-                this.chargedCastedT = Variables.TickCount;
-            }
-        }
-
-        /// <summary>
-        ///     On Charged Spell Update subscribed event function.
-        /// </summary>
-        /// <param name="sender">
-        ///     <see cref="Spellbook" /> sender
-        /// </param>
-        /// <param name="args">
-        ///     Spell-book Update Charged Spell Data
-        /// </param>
-        private void Spellbook_OnUpdateChargedSpell(Spellbook sender, SpellbookUpdateChargeableSpellEventArgs args)
-        {
-            if (sender.Owner.IsMe && Variables.TickCount - this.chargedReqSentT < 3000 && args.ReleaseCast)
-            {
-                args.Process = false;
-            }
-        }
-
-        /// <summary>
-        ///     Spell-book On Cast Spell subscribed event function.
-        /// </summary>
-        /// <param name="spellbook">
-        ///     <see cref="Spellbook" /> sender
-        /// </param>
-        /// <param name="args">
-        ///     Spell-book Cast Spell Data
-        /// </param>
-        private void SpellbookOnCastSpell(Spellbook spellbook, SpellbookCastSpellEventArgs args)
-        {
-            if (args.Slot != this.Slot)
-            {
-                return;
-            }
-
-            if (Variables.TickCount - this.chargedReqSentT > 500)
-            {
-                if (this.IsCharging)
-                {
-                    this.Cast(new Vector2(args.EndPosition.X, args.EndPosition.Y));
-                }
-            }
-        }
-
         #endregion
     }
 }
