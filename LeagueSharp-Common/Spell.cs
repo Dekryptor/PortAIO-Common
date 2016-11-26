@@ -104,7 +104,7 @@
             this.DamageType = damageType;
 
             // Default values
-            this.MinHitChance = HitChance.VeryHigh;
+            this.MinHitChance = HitChance.High;
         }
 
         /// <summary>
@@ -892,13 +892,11 @@
 
             if (IsChargedSpell && charge != null)
             {
-                var b = charge.GetPrediction(unit);
-                return new PredictionOutput() { CastPosition = b.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = b.UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
+                return new PredictionOutput() { CastPosition = charge.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = charge.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
             else if (skillshot != null && IsSkillshot)
             {
-                var a = skillshot.GetPrediction(unit);
-                return new PredictionOutput() { CastPosition = a.CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = a.UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
+                return new PredictionOutput() { CastPosition = skillshot.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = skillshot.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
 
             return pred;
@@ -1000,20 +998,18 @@
         /// <param name="minRange">The minimum range.</param>
         /// <param name="maxRange">The maximum range.</param>
         /// <param name="deltaT">The delta time.</param>
-        public void SetCharged(string spellName, string buffName, int minRange, int maxRange, float deltaT, double castDelay = 0.25, int? spellSpeed = null, int? spellWidth = null)
+        public void SetCharged(int minRange, int maxRange, float fullyChargedTime, double castDelay = 0.25, int? spellSpeed = null, int? spellWidth = null)
         {
-            this.IsChargedSpell = true;
-            this.ChargedSpellName = spellName;
-            this.ChargedBuffName = buffName;
-            this.ChargedMinRange = minRange;
-            this.ChargedMaxRange = maxRange - 75;
-            this.ChargeDuration = (int)(deltaT * 1000);
-            this._chargedCastedT = 0;
+            ChargedMinRange = minRange;
+            ChargedMaxRange = maxRange;
+            ChargeDuration = (int)(fullyChargedTime * 1000);
+
+            IsSkillshot = false;
+            IsChargedSpell = true;
 
             skillshot = null;
-            IsSkillshot = false;
 
-            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(deltaT * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
+            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, (uint)maxRange - 75, (int)(fullyChargedTime * 1000), (int)castDelay * 1000, spellSpeed, spellWidth);
             charge.AllowedCollisionCount = int.MaxValue;
 
             Game.OnUpdate += (args) =>
@@ -1126,6 +1122,11 @@
             this.From = from;
             this.RangeCheckFrom = rangeCheckFrom;
             this.IsSkillshot = false;
+
+            skillshot = null;
+            charge = null;
+            IsSkillshot = false;
+            IsChargedSpell = false;
         }
 
         /// <summary>
@@ -1231,7 +1232,6 @@
         /// <param name="releaseCast">if set to <c>true</c> [release cast].</param>
         private static void ShootChargedSpell(SpellSlot slot, Vector3 position, bool releaseCast = true)
         {
-            Console.WriteLine("Shooting Charged Spell");
             position.Z = NavMesh.GetHeightForPosition(position.X, position.Y);
             ObjectManager.Player.Spellbook.UpdateChargeableSpell(slot, position, releaseCast, false);
             ObjectManager.Player.Spellbook.CastSpell(slot, position, false);
@@ -1263,14 +1263,13 @@
             {
                 return CastStates.NotReady;
             }
-
             if (minTargets != -1)
             {
                 aoe = true;
             }
 
             //Targetted spell.
-            if (!this.IsSkillshot)
+            if (!this.IsSkillshot && !this.IsChargedSpell)
             {
                 //Target out of range
                 if (this.RangeCheckFrom.Distance(unit.ServerPosition, true) > this.GetRangeSqr(unit))
@@ -1280,61 +1279,51 @@
 
                 this.LastCastAttemptT = Utils.TickCount;
 
-                if (packetCast)
+                //Cant cast the Spell.
+                if (!ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit))
                 {
-                    if (!ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit, false))
-                    {
-                        return CastStates.NotCasted;
-                    }
-                }
-                else
-                {
-                    //Cant cast the Spell.
-                    if (!ObjectManager.Player.Spellbook.CastSpell(this.Slot, unit))
-                    {
-                        return CastStates.NotCasted;
-                    }
+                    return CastStates.NotCasted;
                 }
 
                 return CastStates.SuccessfullyCasted;
             }
 
-            //Get the best position to cast the spell.
-            var prediction = this.GetPrediction(unit, aoe);
-            var prediction2 = (charge != null) ? charge.GetPrediction(unit) : skillshot.GetPrediction(unit);
-            var prediction3 = skillshot.GetPrediction(unit);
-
-            if (minTargets != -1 && prediction.AoeTargetsHitCount < minTargets)
+            if (charge != null)
             {
-                return CastStates.NotEnoughTargets;
+                if (!charge.IsInRange(unit))
+                {
+                    Console.WriteLine("1");
+                    return CastStates.OutOfRange;
+                }
+                if (minTargets != -1 && charge.GetPrediction(unit).CollisionObjects.Count() < minTargets)
+                {
+                    Console.WriteLine("2");
+                    return CastStates.NotEnoughTargets;
+                }
+                //Console.WriteLine("Pred2 : " + charge.GetPrediction(unit).HitChance);
+                //Console.WriteLine("Pred2CVS : " + convertHitChance(this.MinHitChance));
             }
-
-            //Target out of range.
-            if (this.RangeCheckFrom.Distance(prediction2.CastPosition, true) > this.RangeSqr)
+            else
             {
-                return CastStates.OutOfRange;
-            }
-
-            if (prediction2.HitChance < convertHitChance(this.MinHitChance)
-                || (exactHitChance && prediction2.HitChance != convertHitChance(this.MinHitChance)))
-            {
-                return CastStates.LowHitChance;
+                if (!skillshot.IsInRange(unit))
+                {
+                    return CastStates.OutOfRange;
+                }
+                if (minTargets != -1 && skillshot.GetPrediction(unit).CollisionObjects.Count() < minTargets)
+                {
+                    return CastStates.NotEnoughTargets;
+                }
+                Console.WriteLine("Pred2 : " + skillshot.GetPrediction(unit).HitChance);
+                Console.WriteLine("Pred2CVS : " + convertHitChance(this.MinHitChance));
             }
 
             this.LastCastAttemptT = Utils.TickCount;
 
             if (this.IsChargedSpell && charge != null)
             {
-                if (this.IsCharging)
+                if (!charge.Cast(charge.GetPrediction(unit).CastPosition))
                 {
-                    if (!charge.Cast(charge.GetPrediction(unit).CastPosition))
-                    {
-                        return CastStates.NotCasted;
-                    }
-                }
-                else
-                {
-                    this.StartCharging();
+                    return CastStates.NotCasted;
                 }
             }
 
@@ -1387,7 +1376,7 @@
             {
                 return EloBuddy.SDK.Enumerations.HitChance.High;
             }
-            return EloBuddy.SDK.Enumerations.HitChance.Low;
+            return EloBuddy.SDK.Enumerations.HitChance.Impossible;
         }
 
         private void OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
