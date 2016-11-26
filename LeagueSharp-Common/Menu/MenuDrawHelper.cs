@@ -147,7 +147,7 @@
                 new ColorBGRA(255, 255, 255, 255));
         }
 
-        private static readonly Line Line = new Line(EloBuddy.Drawing.Direct3DDevice) { GLLines = true };
+        private static Line Line = new Line(EloBuddy.Drawing.Direct3DDevice) { GLLines = true };
 
         /// <summary>
         ///     Draws a box.
@@ -418,6 +418,13 @@
         /// </param>
         private static void OnDomainUnload(object sender, EventArgs eventArgs)
         {
+            if (Line != null)
+            {
+                Line.OnLostDevice();
+                Line.Dispose();
+                Line = null;
+            }
+
             if (Font != null)
             {
                 Font.OnLostDevice();
@@ -453,6 +460,7 @@
         /// <param name="args">The event args.</param>
         private static void OnPostReset(EventArgs args)
         {
+            Line.OnResetDevice();
             Font.OnResetDevice();
             FontBold.OnResetDevice();
             FontBoldItalic.OnResetDevice();
@@ -467,6 +475,7 @@
         /// </param>
         private static void OnPreReset(EventArgs args)
         {
+            Line.OnLostDevice();
             Font.OnLostDevice();
             FontBold.OnLostDevice();
             FontItalic.OnLostDevice();
