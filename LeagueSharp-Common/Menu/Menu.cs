@@ -588,6 +588,7 @@
             var items = this.Items.ToArray();
 
             Drawing.Direct3DDevice.SetRenderState(RenderState.AlphaBlendEnable, true);
+
             MenuDrawHelper.DrawBox(
                 this.Position,
                 this.Width,
@@ -599,8 +600,6 @@
                 System.Drawing.Color.Black);
 
             var style = this.Style;
-            style &= ~FontStyle.Strikeout;
-            style &= ~FontStyle.Underline;
 
             var font = MenuDrawHelper.GetFont(style);
 
@@ -610,35 +609,13 @@
                 new Rectangle((int)this.Position.X + 5, (int)this.Position.Y, this.Width, this.Height),
                 FontDrawFlags.VerticalCenter,
                 this.Color);
+
             font.DrawText(
                 null,
                 ">",
                 new Rectangle((int)this.Position.X - 5, (int)this.Position.Y, this.Width, this.Height),
                 FontDrawFlags.Right | FontDrawFlags.VerticalCenter,
                 this.Color);
-
-            var textWidth = font.MeasureText(null, (this.DisplayName));
-            if ((this.Style & FontStyle.Strikeout) != 0)
-            {
-                Drawing.DrawLine(
-                    this.Position.X + 5,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 2f),
-                    this.Position.X + 5 + textWidth.Width,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 2f),
-                    1f,
-                    System.Drawing.Color.FromArgb(this.Color.A, this.Color.R, this.Color.G, this.Color.B));
-            }
-
-            if ((this.Style & FontStyle.Underline) != 0)
-            {
-                Drawing.DrawLine(
-                    this.Position.X + 5,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 1.5f),
-                    this.Position.X + 5 + textWidth.Width,
-                    this.Position.Y + (MenuSettings.MenuItemHeight / 1.5f),
-                    1f,
-                    System.Drawing.Color.FromArgb(this.Color.A, this.Color.R, this.Color.G, this.Color.B));
-            }
 
             //Draw the menu submenus
             foreach (var child in childs.ToArray().Where(child => child.Visible))
