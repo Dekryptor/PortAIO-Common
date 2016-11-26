@@ -575,7 +575,7 @@
         public bool Cast(Vector3 position, bool packetCast = false)
         {
             LastCastAttemptT = Utils.TickCount;
-            ObjectManager.Player.Spellbook.CastSpell(Slot, position);
+            Player.CastSpell(Slot, position);
             return true;
         }
 
@@ -845,7 +845,7 @@
                         Radius = this.Width,
                         Speed = this.Speed,
                         From = this.From,
-                        Range = (overrideRange > 0) ? overrideRange : this.Range,
+                        Range = (overrideRange > 150) ? overrideRange : this.Range,
                         Collision = this.Collision,
                         Type = this.Type,
                         RangeCheckFrom = this.RangeCheckFrom,
