@@ -23,7 +23,7 @@ namespace LeagueSharp.SDK.Utils
     using System.Linq;
     using EloBuddy;
 
-    
+
 
     /// <summary>
     ///     Invulnerable utility class
@@ -65,11 +65,7 @@ namespace LeagueSharp.SDK.Utils
                                     GameObjects.Player.CountEnemyHeroesInRange(
                                         GameObjects.Player.GetRealAutoAttackRange()) > 1
                             },
-                        new InvulnerableEntry("UndyingRage")
-                            {
-                                ChampionName = "Tryndamere", MinHealthPercent = 1,
-                                CheckFunction = (target, type) => target.HealthPercent <= 5
-                            },
+                        new InvulnerableEntry("UndyingRage") { ChampionName = "Tryndamere", MinHealthPercent = 1 },
                         new InvulnerableEntry("JudicatorIntervention") { IsShield = true },
                         new InvulnerableEntry("FioraW") { ChampionName = "Fiora", IsShield = true },
                         new InvulnerableEntry("JaxCounterStrike")
@@ -79,19 +75,8 @@ namespace LeagueSharp.SDK.Utils
                         new InvulnerableEntry("SivirE") { ChampionName = "Sivir", IsShield = true },
                         new InvulnerableEntry("NocturneShroudofDarkness") { ChampionName = "Nocturne", IsShield = true },
                         new InvulnerableEntry("malzaharpassiveshield") { ChampionName = "Malzahar", IsShield = true },
-                        new InvulnerableEntry("OlafRagnarock")
-                            {
-                                ChampionName = "Olaf", IsShield = true,
-                                CheckFunction =
-                                    (target, type) =>
-                                    GameObjects.Player.CountEnemyHeroesInRange(
-                                        GameObjects.Player.GetRealAutoAttackRange()) > 1
-                            },
-                        new InvulnerableEntry("KindredrNoDeathBuff")
-                            {
-                                ChampionName = "Kindred", MinHealthPercent = 10,
-                                CheckFunction = (target, type) => target.HealthPercent <= 10
-                            }
+                        new InvulnerableEntry("OlafRagnarock") { ChampionName = "Olaf", IsShield = true },
+                        new InvulnerableEntry("KindredrNoDeathBuff") { MinHealthPercent = 10 }
                     });
         }
 
