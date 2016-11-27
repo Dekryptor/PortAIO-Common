@@ -972,7 +972,7 @@
 
             skillshot = null;
 
-            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, ((uint)maxRange - 75), (int)(fullyChargedTime * 1000), Convert.ToInt32(castDelay * 1000), spellSpeed, spellWidth) { AllowedCollisionCount = int.MaxValue };
+            charge = new EloBuddy.SDK.Spell.Chargeable(Slot, (uint)minRange, ((uint)maxRange), (int)(fullyChargedTime * 1000), Convert.ToInt32(castDelay * 1000), spellSpeed, spellWidth) { AllowedCollisionCount = int.MaxValue };
 
             Game.OnUpdate += (args) =>
             {
@@ -1252,6 +1252,10 @@
 
             if (charge != null)
             {
+                if (charge.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Impossible || charge.GetPrediction(unit).HitChance < convertHitChance(MinHitChance))
+                {
+                    return CastStates.LowHitChance;
+                }
                 if (!charge.IsInRange(unit))
                 {
                     return CastStates.OutOfRange;
@@ -1263,6 +1267,10 @@
             }
             else
             {
+                if (skillshot.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Impossible || skillshot.GetPrediction(unit).HitChance < convertHitChance(MinHitChance))
+                {
+                    return CastStates.LowHitChance;
+                }
                 if (!skillshot.IsInRange(unit))
                 {
                     return CastStates.OutOfRange;
