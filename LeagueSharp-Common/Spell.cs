@@ -963,6 +963,8 @@
         /// <param name="deltaT">The delta time.</param>
         public void SetCharged(int minRange, int maxRange, float fullyChargedTime, double castDelay = 0.25, int? spellSpeed = int.MaxValue, int? spellWidth = 100)
         {
+            maxRange = maxRange - 75;
+
             ChargedMinRange = minRange;
             ChargedMaxRange = maxRange;
             ChargeDuration = (int)(fullyChargedTime * 1000);
