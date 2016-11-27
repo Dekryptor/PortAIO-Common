@@ -9,6 +9,7 @@
     using Color = System.Drawing.Color;
     using Font = SharpDX.Direct3D9.Font;
     using Rectangle = SharpDX.Rectangle;
+    using RectangleF = SharpDX.RectangleF;
     using EloBuddy;
 
     /// <summary>
@@ -144,19 +145,13 @@
             int borderwidth,
             Color borderColor)
         {
+
+            // Causing FPS drops
             SharpDX.Color aColor = new SharpDX.Color(Color.FromArgb(color.ToArgb()).R, Color.FromArgb(color.ToArgb()).G, Color.FromArgb(color.ToArgb()).B, Color.FromArgb(color.ToArgb()).A);
             SharpDX.Color contourColor = new SharpDX.Color(Color.FromArgb(borderColor.ToArgb()).R, Color.FromArgb(borderColor.ToArgb()).G, Color.FromArgb(borderColor.ToArgb()).B, Color.FromArgb(borderColor.ToArgb()).A);
 
-            Line.Width = width;
-            Line.Begin();
-            Line.Draw(
-                new[]
-                    {
-                            new Vector2((position.X + borderwidth) + (width / 2), position.Y),
-                            new Vector2((position.X + borderwidth) + (width / 2), position.Y + height)
-                    },
-                aColor);
-            Line.End();
+            RectangleF rect = new RectangleF((float)(position.X + borderwidth), (float)position.Y, (float)width, (float)height);
+            Drawing.DrawLine(new Vector2(rect.Left, rect.Top + rect.Height / 2), new Vector2(rect.Right, rect.Top + rect.Height / 2), rect.Height, color);
 
             if (borderwidth > 0)
             {
@@ -193,6 +188,8 @@
                 Line.End();
             }
         }
+
+        public static SharpDX.RectangleF CenterRectangle { get; set; }
 
         /// <summary>
         ///     Draws the on and off box.
@@ -438,6 +435,7 @@
         {
             Line.OnResetDevice();
             Font.OnResetDevice();
+
             /*
             FontBold.OnResetDevice();
             FontBoldItalic.OnResetDevice();
@@ -455,6 +453,7 @@
         {
             Line.OnLostDevice();
             Font.OnLostDevice();
+
             /*
             FontBold.OnLostDevice();
             FontItalic.OnLostDevice();
