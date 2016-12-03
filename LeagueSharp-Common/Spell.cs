@@ -1270,7 +1270,7 @@
             {
                 if (Collision)
                 {
-                    if (charge.GetPrediction(unit).CollisionObjects.Length >= 0)
+                    if (charge.GetPrediction(unit).CollisionObjects.Length >= 0 && charge.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
                     {
                         return CastStates.Collision;
                     }
@@ -1292,7 +1292,7 @@
             {
                 if (Collision)
                 {
-                    if (skillshot.GetPrediction(unit).CollisionObjects.Length >= 0)
+                    if (skillshot.GetPrediction(unit).CollisionObjects.Length >= 0 && skillshot.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
                     {
                         return CastStates.Collision;
                     }
