@@ -608,9 +608,17 @@
         {
             var currentHitchance = this.MinHitChance;
             this.MinHitChance = hitChance;
-            var castResult = this._cast(unit, packetCast, false, false);
+            var castResult = this._cast(unit, packetCast, false, false) == CastStates.SuccessfullyCasted;
+            if (charge != null)
+            {
+                castResult = charge.CastMinimumHitchance(unit, convertHitChance(hitChance));
+            }
+            else
+            {
+                castResult = skillshot.CastMinimumHitchance(unit, convertHitChance(hitChance));
+            }
             this.MinHitChance = currentHitchance;
-            return castResult == CastStates.SuccessfullyCasted;
+            return castResult;
         }
 
         /// <summary>
@@ -622,8 +630,16 @@
         /// <returns><c>true</c> if the spell was successfully casted, <c>false</c> otherwise.</returns>
         public bool CastIfWillHit(Obj_AI_Base unit, int minTargets = 5, bool packetCast = false)
         {
-            var castResult = this._cast(unit, packetCast, true, false, minTargets);
-            return castResult == CastStates.SuccessfullyCasted;
+            var castResult = this._cast(unit, packetCast, true, false, minTargets) == CastStates.SuccessfullyCasted;
+            if (charge != null)
+            {
+                castResult = charge.CastIfItWillHit(minTargets);
+            }
+            else
+            {
+                castResult = skillshot.CastIfItWillHit(minTargets);
+            }
+            return castResult;
         }
 
         /// <summary>
@@ -855,11 +871,11 @@
 
             if (IsChargedSpell && charge != null)
             {
-                return new PredictionOutput() { CastPosition = charge.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = charge.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
+                return new PredictionOutput() { CastPosition = charge.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = charge.GetPrediction(unit).CollisionObjects.ToList(), AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = charge.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
             else if (skillshot != null && IsSkillshot)
             {
-                return new PredictionOutput() { CastPosition = skillshot.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = skillshot.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
+                return new PredictionOutput() { CastPosition = skillshot.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = skillshot.GetPrediction(unit).CollisionObjects.ToList(), AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = skillshot.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
 
             return pred;
@@ -1254,6 +1270,13 @@
 
             if (charge != null)
             {
+                if (Collision)
+                {
+                    if (charge.GetPrediction(unit).CollisionObjects.Length >= 0)
+                    {
+                        return CastStates.Collision;
+                    }
+                }
                 if (charge.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Impossible || charge.GetPrediction(unit).HitChance < convertHitChance(MinHitChance))
                 {
                     return CastStates.LowHitChance;
@@ -1269,6 +1292,13 @@
             }
             else
             {
+                if (Collision)
+                {
+                    if (skillshot.GetPrediction(unit).CollisionObjects.Length >= 0)
+                    {
+                        return CastStates.Collision;
+                    }
+                }
                 if (skillshot.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Impossible || skillshot.GetPrediction(unit).HitChance < convertHitChance(MinHitChance))
                 {
                     return CastStates.LowHitChance;
