@@ -111,7 +111,7 @@ namespace LeagueSharp.Common
                 "yorickdecayedghoulbasicattack", "yorickravenousghoulbasicattack",
                 "yorickspectralghoulbasicattack", "malzaharvoidlingbasicattack",
                 "malzaharvoidlingbasicattack2", "malzaharvoidlingbasicattack3",
-                "kindredwolfbasicattack"
+                "kindredwolfbasicattack", "gravesautoattackrecoil"
             };
 
         /// <summary>
