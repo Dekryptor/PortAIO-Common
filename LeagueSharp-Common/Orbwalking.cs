@@ -1588,13 +1588,13 @@ namespace LeagueSharp.Common
                 {
                     if (!this.ShouldWait())
                     {
-                        if (this._prevMinion != null && !this._prevMinion.IsDead && this._prevMinion.IsHPBarRendered && this._prevMinion.IsValidTarget() && this.InAutoAttackRange(this._prevMinion))
+                        if (this._prevMinion != null && !this._prevMinion.IsDead && this._prevMinion.IsValidTarget() && this.InAutoAttackRange(this._prevMinion))
                         {
                             var predHealth = HealthPrediction.LaneClearHealthPrediction(
                                 this._prevMinion,
                                 (int)(this.Player.AttackDelay * 1000 * LaneClearWaitTimeMod),
                                 this.FarmDelay);
-                            if (predHealth >= 2 * this.Player.GetAutoAttackDamage(this._prevMinion)
+                            if (this._prevMinion.IsHPBarRendered && predHealth >= 2 * this.Player.GetAutoAttackDamage(this._prevMinion)
                                 || Math.Abs(predHealth - this._prevMinion.Health) < float.Epsilon)
                             {
                                 return this._prevMinion;
