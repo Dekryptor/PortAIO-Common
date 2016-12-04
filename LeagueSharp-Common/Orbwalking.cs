@@ -1378,7 +1378,7 @@ namespace LeagueSharp.Common
                 if (mode == OrbwalkingMode.LaneClear || mode == OrbwalkingMode.Mixed)
                 {
                     var jminions =
-                        ObjectManager.Get<Obj_AI_Minion>()
+                        EntityManager.MinionsAndMonsters.Monsters
                             .Where(
                                 mob =>
                                 mob.IsValidTarget() && mob.Team == GameObjectTeam.Neutral && this.InAutoAttackRange(mob)
@@ -1388,7 +1388,7 @@ namespace LeagueSharp.Common
                                  ? jminions.MinOrDefault(mob => mob.MaxHealth)
                                  : jminions.MaxOrDefault(mob => mob.MaxHealth);
 
-                    if (result != null)
+                    if (result != null && !result.IsDead)
                     {
                         return result;
                     }
@@ -1588,7 +1588,7 @@ namespace LeagueSharp.Common
                 {
                     if (!this.ShouldWait())
                     {
-                        if (this._prevMinion != null && this._prevMinion.IsValidTarget() && this.InAutoAttackRange(this._prevMinion))
+                        if (this._prevMinion != null && !this._prevMinion.IsDead && this._prevMinion.IsHPBarRendered && this._prevMinion.IsValidTarget() && this.InAutoAttackRange(this._prevMinion))
                         {
                             var predHealth = HealthPrediction.LaneClearHealthPrediction(
                                 this._prevMinion,
@@ -1602,7 +1602,7 @@ namespace LeagueSharp.Common
                         }
 
                         result = (from minion in
-                                      ObjectManager.Get<Obj_AI_Minion>()
+                                      EntityManager.MinionsAndMonsters.EnemyMinions
                                       .Where(
                                           minion =>
                                           minion.IsValidTarget() && this.InAutoAttackRange(minion)
@@ -1618,7 +1618,7 @@ namespace LeagueSharp.Common
                                   select minion).MaxOrDefault(
                                       m => !MinionManager.IsMinion(m, true) ? float.MaxValue : m.Health);
 
-                        if (result != null)
+                        if (result != null && !result.IsDead)
                         {
                             this._prevMinion = (Obj_AI_Minion)result;
                         }
