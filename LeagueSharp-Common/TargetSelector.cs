@@ -216,7 +216,7 @@
                 }
 
                 var targets =
-                    HeroManager.Enemies.FindAll(
+                    EloBuddy.SDK.EntityManager.Heroes.Enemies.FindAll(
                         hero =>
                         ignoredChamps.All(ignored => ignored.NetworkId != hero.NetworkId)
                         && IsValidTarget(hero, range, type, ignoreShieldSpells, rangeCheckFrom)
@@ -535,7 +535,7 @@
                 return;
             }
             _selectedTargetObjAiHero =
-                HeroManager.Enemies.FindAll(hero => hero.IsValidTarget() && hero.Distance(Game.CursorPos, true) < 40000)
+                EloBuddy.SDK.EntityManager.Heroes.Enemies.FindAll(hero => hero.IsValidTarget() && hero.Distance(Game.CursorPos, true) < 40000)
                     // 200 * 200
                     .OrderBy(h => h.Distance(Game.CursorPos, true)).FirstOrDefault();
         }
