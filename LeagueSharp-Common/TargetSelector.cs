@@ -375,6 +375,12 @@
                 target.Buffs.Select(buff => buff.Name),
                 StringComparer.OrdinalIgnoreCase);
 
+            // Fizz's Tidal Trickster (E)
+            if (targetBuffs.Contains("FizzE"))
+            {
+                return true;
+            }
+
             // Kindred's Lamb's Respite(R)
             if (targetBuffs.Contains("KindredRNoDeathBuff") && target.HealthPercent <= 10)
             {

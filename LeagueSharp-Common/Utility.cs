@@ -645,7 +645,7 @@
             Vector3 pos = (obj_AI_Base != null) ? obj_AI_Base.ServerPosition : target.Position;
             if (!rangeCheckFrom.HasValue)
             {
-                float num = HeroManager.Player.ServerPosition.DistanceSquared(pos);
+                float num = ObjectManager.Player.ServerPosition.DistanceSquared(pos);
                 float? num2 = range;
                 return num < num2.GetValueOrDefault() && num2.HasValue;
             }

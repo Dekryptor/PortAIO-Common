@@ -166,7 +166,7 @@ namespace LeagueSharp.Common
 
             if (_championName == "Rengar")
             {
-                Obj_AI_Base.OnPlayAnimation += delegate(Obj_AI_Base sender, GameObjectPlayAnimationEventArgs args)
+                Obj_AI_Base.OnPlayAnimation += delegate (Obj_AI_Base sender, GameObjectPlayAnimationEventArgs args)
                     {
                         if (sender.IsMe && args.Animation == "Spell5")
                         {
@@ -445,7 +445,7 @@ namespace LeagueSharp.Common
         public static float GetRealAutoAttackRange(AttackableUnit target)
         {
             var result = Player.AttackRange + Player.BoundingRadius;
-            if (target.IsValidTarget())
+            if (target.IsValidTarget() && target != null)
             {
                 var aiBase = target as Obj_AI_Base;
                 if (aiBase != null && Player.ChampionName == "Caitlyn")
@@ -469,7 +469,7 @@ namespace LeagueSharp.Common
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool InAutoAttackRange(AttackableUnit target)
         {
-            if (!target.IsValidTarget())
+            if (!target.IsValidTarget() || target == null)
             {
                 return false;
             }
@@ -765,7 +765,7 @@ namespace LeagueSharp.Common
         /// <param name="args">The <see cref="GameObjectProcessSpellCastEventArgs" /> instance containing the event data.</param>
         private static void Obj_AI_Base_OnDoCast_Delayed(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            
+
             if (IsAutoAttackReset(args.SData.Name))
             {
                 ResetAutoAttackTimer();
@@ -1206,9 +1206,10 @@ namespace LeagueSharp.Common
                     && !_config.Item("PriorizeFarm").GetValue<bool>())
                 {
                     var target = TargetSelector.GetTarget(-1, TargetSelector.DamageType.Physical);
-                    if (target != null && this.InAutoAttackRange(target))
+                    if (target != null && this.InAutoAttackRange(target) && target.IsValidTarget())
                     {
-                        return target;
+                        if (target.IsHPBarRendered)
+                            return target;
                     }
                 }
 
@@ -1220,7 +1221,7 @@ namespace LeagueSharp.Common
                             || mode == OrbwalkingMode.LastHit || mode == OrbwalkingMode.Freeze)))
                 {
                     var enemyGangPlank =
-                        HeroManager.Enemies.FirstOrDefault(
+                        EntityManager.Heroes.Enemies.FirstOrDefault(
                             e => e.ChampionName.Equals("gangplank", StringComparison.InvariantCultureIgnoreCase));
 
                     if (enemyGangPlank != null)
@@ -1328,7 +1329,8 @@ namespace LeagueSharp.Common
                 //Forced target
                 if (this._forcedTarget != null && this._forcedTarget.IsValidTarget() && this.InAutoAttackRange(this._forcedTarget))
                 {
-                    return this._forcedTarget;
+                    if (this._forcedTarget.IsHPBarRendered)
+                        return this._forcedTarget;
                 }
 
                 /* turrets / inhibitors / nexus */
@@ -1369,7 +1371,8 @@ namespace LeagueSharp.Common
                         var target = TargetSelector.GetTarget(-1, TargetSelector.DamageType.Physical);
                         if (target != null && target.IsValidTarget() && this.InAutoAttackRange(target))
                         {
-                            return target;
+                            if (target.IsHPBarRendered)
+                                return target;
                         }
                     }
                 }
@@ -1594,17 +1597,18 @@ namespace LeagueSharp.Common
                                 this._prevMinion,
                                 (int)(this.Player.AttackDelay * 1000 * LaneClearWaitTimeMod),
                                 this.FarmDelay);
-                            if (this._prevMinion.IsHPBarRendered && predHealth >= 2 * this.Player.GetAutoAttackDamage(this._prevMinion)
+                            if (predHealth >= 2 * this.Player.GetAutoAttackDamage(this._prevMinion)
                                 || Math.Abs(predHealth - this._prevMinion.Health) < float.Epsilon)
                             {
-                                return this._prevMinion;
+                                if (this._prevMinion.IsHPBarRendered)
+                                    return this._prevMinion;
                             }
                         }
 
                         result = (from minion in
                                       EntityManager.MinionsAndMonsters.EnemyMinions
                                       .Where(
-                                          minion =>
+                                          minion => minion.IsHPBarRendered &&
                                           minion.IsValidTarget() && this.InAutoAttackRange(minion)
                                           && this.ShouldAttackMinion(minion))
                                   let predHealth =
