@@ -1712,7 +1712,7 @@ namespace LeagueSharp.Common
             public bool ShouldWait()
             {
                 return
-                    ObjectManager.Get<Obj_AI_Minion>()
+                    EntityManager.MinionsAndMonsters.EnemyMinions
                         .Any(
                             minion =>
                             minion.IsValidTarget() && minion.Team != GameObjectTeam.Neutral
