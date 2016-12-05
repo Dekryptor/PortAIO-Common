@@ -871,11 +871,11 @@
 
             if (IsChargedSpell && charge != null)
             {
-                return new PredictionOutput() { CastPosition = charge.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = charge.GetPrediction(unit).CollisionObjects.ToList(), AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = charge.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
+                return new PredictionOutput() { CastPosition = charge.GetPrediction(unit).CastPosition, Hitchance = oppConvertHitC(charge.GetPrediction(unit).HitChance), CollisionObjects = charge.GetPrediction(unit).CollisionObjects.ToList(), AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = charge.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
             else if (skillshot != null && IsSkillshot)
             {
-                return new PredictionOutput() { CastPosition = skillshot.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = skillshot.GetPrediction(unit).CollisionObjects.ToList(), AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = skillshot.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
+                return new PredictionOutput() { CastPosition = skillshot.GetPrediction(unit).CastPosition, Hitchance = oppConvertHitC(skillshot.GetPrediction(unit).HitChance), CollisionObjects = skillshot.GetPrediction(unit).CollisionObjects.ToList(), AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = skillshot.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
 
             return pred;
@@ -1270,7 +1270,7 @@
             {
                 if (Collision)
                 {
-                    if (charge.GetPrediction(unit).CollisionObjects.Length >= 0 && charge.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
+                    if (charge.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
                     {
                         return CastStates.Collision;
                     }
@@ -1292,7 +1292,7 @@
             {
                 if (Collision)
                 {
-                    if (skillshot.GetPrediction(unit).CollisionObjects.Length >= 0 && skillshot.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
+                    if (skillshot.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
                     {
                         return CastStates.Collision;
                     }
@@ -1330,6 +1330,47 @@
             }
 
             return CastStates.SuccessfullyCasted;
+        }
+
+        public HitChance oppConvertHitC(EloBuddy.SDK.Enumerations.HitChance a)
+        {
+            if (a == EloBuddy.SDK.Enumerations.HitChance.Collision)
+            {
+                return HitChance.Collision;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.Dashing)
+            {
+                return HitChance.Dashing;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.High)
+            {
+                return HitChance.High;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.Immobile)
+            {
+                return HitChance.Immobile;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.Impossible)
+            {
+                return HitChance.Impossible;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.Low)
+            {
+                return HitChance.Low;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.Medium)
+            {
+                return HitChance.Medium;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.Unknown)
+            {
+                return HitChance.Impossible;
+            }
+            if (a == EloBuddy.SDK.Enumerations.HitChance.AveragePoint)
+            {
+                return HitChance.Medium;
+            }
+            return HitChance.Impossible;
         }
 
         public EloBuddy.SDK.Enumerations.HitChance convertHitChance(HitChance a)
