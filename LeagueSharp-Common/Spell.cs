@@ -1080,6 +1080,10 @@
             {
                 skillshot.AllowedCollisionCount = 0;
             }
+            else
+            {
+                skillshot.AllowedCollisionCount = int.MaxValue;
+            }
         }
 
         /// <summary>
