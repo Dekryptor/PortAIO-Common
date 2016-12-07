@@ -604,29 +604,32 @@ namespace LeagueSharp.Common
 
             try
             {
-                if (target.IsValidTarget() && Attack && CanAttack() /*&& EloBuddy.SDK.Orbwalker.CanAutoAttack*/)
+                if (target != null) // NEED a check for attacking - should fix the issue of Orbwalker randomly stopping
                 {
-                    DisableNextAttack = false;
-                    FireBeforeAttack(target);
-
-                    if (!DisableNextAttack)
+                    if (target.IsValidTarget() && Attack && CanAttack())
                     {
-                        if (!NoCancelChamps.Contains(_championName))
-                        {
-                            _missileLaunched = false;
-                        }
+                        DisableNextAttack = false;
+                        FireBeforeAttack(target);
 
-                        if (EloBuddy.Player.IssueOrder(GameObjectOrder.AttackUnit, target))
+                        if (!DisableNextAttack)
                         {
-                            LastAttackCommandT = Utils.GameTimeTickCount;
-                            _lastTarget = target;
-                        }
+                            if (!NoCancelChamps.Contains(_championName))
+                            {
+                                _missileLaunched = false;
+                            }
 
-                        return;
+                            if (EloBuddy.Player.IssueOrder(GameObjectOrder.AttackUnit, target))
+                            {
+                                LastAttackCommandT = Utils.GameTimeTickCount;
+                                _lastTarget = target;
+                            }
+
+                            return;
+                        }
                     }
                 }
 
-                if (/*EloBuddy.SDK.Orbwalker.CanMove*/ CanMove(extraWindup))// && Move)
+                if (CanMove(extraWindup))
                 {
                     if (Orbwalker.LimitAttackSpeed && (Player.AttackDelay < 1 / 2.6f) && _autoattackCounter % 3 != 0)// && !CanMove(500, true))
                     {
