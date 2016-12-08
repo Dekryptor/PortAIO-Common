@@ -343,6 +343,12 @@ namespace LeagueSharp.Common
         /// <returns><c>true</c> if this instance can attack; otherwise, <c>false</c>.</returns>
         public static bool CanAttack()
         {
+            /* -TEST
+            if (!Attack || config.Item("OW_Misc_AllAttackDisabled").IsActive())
+            {
+                return false;
+            }
+            */
             if (Player.ChampionName == "Graves")
             {
                 var attackDelay = 1.0740296828d * 1000 * Player.AttackDelay - 716.2381256175d;
@@ -378,6 +384,12 @@ namespace LeagueSharp.Common
         /// <returns><c>true</c> if this instance can move the specified extra windup; otherwise, <c>false</c>.</returns>
         public static bool CanMove(float extraWindup, bool disableMissileCheck = false)
         {
+            /* -TEST
+            if (!Move || config.Item("OW_Misc_AllMovementDisabled").IsActive())
+            {
+                return false;
+            }
+            */
             if (_missileLaunched && Orbwalker.MissileCheck && !disableMissileCheck)
             {
                 return true;
@@ -440,6 +452,7 @@ namespace LeagueSharp.Common
         /// <returns>System.Single.</returns>
         public static float GetRealAutoAttackRange(AttackableUnit target)
         {
+            // need 2 check if this is right     -TEST
             var result = Player.AttackRange + Player.BoundingRadius;
             if (target != null)
             {
@@ -469,11 +482,23 @@ namespace LeagueSharp.Common
         /// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
         public static bool InAutoAttackRange(AttackableUnit target)
         {
+            // need 2 check if this is right -TEST
             if (!target.IsValidTarget() || target == null)
             {
                 return false;
             }
             var myRange = GetRealAutoAttackRange(target);
+
+            /* - need test
+            var hero = target as AIHeroClient;
+            if (hero != null)
+            {
+                return
+                Vector2.DistanceSquared(
+                   EloBuddy.SDK.Prediction.Position.PredictUnitPosition(hero, 0), Player.Position.To2D()) <= myRange * myRange;
+            }
+            */
+
             return
                 Vector2.DistanceSquared(
                     target is Obj_AI_Base ? ((Obj_AI_Base)target).ServerPosition.To2D() : target.Position.To2D(),
@@ -565,20 +590,34 @@ namespace LeagueSharp.Common
                 }
             }
 
-            if (Utils.GameTimeTickCount - LastMoveCommandT < 70 + Math.Min(60, Game.Ping) && !overrideTimer && angle < 60)
+            if (Utils.GameTimeTickCount - LastMoveCommandT < (90 + Math.Min(80, Game.Ping)) && !overrideTimer && angle < 60)
             {
                 return;
             }
 
-            if (angle >= 60 && Utils.GameTimeTickCount - LastMoveCommandT < 60)
+            if (angle >= 60 && Utils.GameTimeTickCount - LastMoveCommandT < 160)
             {
                 return;
             }
+
+            if (angle >= 150 && Utils.GameTimeTickCount - LastMoveCommandT < (106 + Math.Min(63, Game.Ping)) && !overrideTimer)
+            {
+                return;
+            }
+
+            //var randomize = Randomizes[OrbwalkingRandomize.Move]; - Need test
+            //if (LeagueSharp.Common.Utils.GameTimeTickCount - LastMoveCommandT < randomize.Current && !overrideTimer && angle <= 80)
+            //{
+            //return;
+            //}
+            //SetRandomizeCurrent(randomize);
 
             EloBuddy.Player.IssueOrder(GameObjectOrder.MoveTo, point);
             LastMoveCommandPosition = point;
             LastMoveCommandT = Utils.GameTimeTickCount;
         }
+
+        private static readonly Spell MovePrediction = new Spell(SpellSlot.Unknown, Player.AttackRange);
 
         /// <summary>
         ///     Orbwalks a target while moving to Position.
@@ -596,6 +635,7 @@ namespace LeagueSharp.Common
             float holdAreaRadius = 0,
             bool useFixedDistance = true,
             bool randomizeMinDistance = true)
+        //, bool meleePrediction = false) - TEST
         {
             if (Utils.GameTimeTickCount - LastAttackCommandT < 70 + Math.Min(60, Game.Ping))
             {
@@ -608,6 +648,7 @@ namespace LeagueSharp.Common
                 {
                     if (target.IsValidTarget() && Attack && CanAttack())
                     {
+                        //var randomize = Randomizes[OrbwalkingRandomize.Attack]; - TEST
                         DisableNextAttack = false;
                         FireBeforeAttack(target);
 
@@ -616,6 +657,14 @@ namespace LeagueSharp.Common
                             if (!NoCancelChamps.Contains(_championName))
                             {
                                 _missileLaunched = false;
+                                /*- Need Test
+                                LastAATick = Utils.GameTimeTickCount + Game.Ping + 100 - (int)(ObjectManager.Player.AttackCastDelay * 1000f);
+                                var d = GetRealAutoAttackRange(target) - 65;
+                                if (Player.Distance(target, true) > d * d && !Player.IsMelee)
+                                {
+                                    LastAATick = Utils.GameTimeTickCount + Game.Ping + 400 - (int)(ObjectManager.Player.AttackCastDelay * 1000f);
+                                }
+                                 */
                             }
 
                             if (EloBuddy.Player.IssueOrder(GameObjectOrder.AttackUnit, target))
@@ -623,11 +672,30 @@ namespace LeagueSharp.Common
                                 LastAttackCommandT = Utils.GameTimeTickCount;
                                 _lastTarget = target;
                             }
+                            /*- Need Test
+                            else
+                            {
+                                ResetAutoAttackTimer();
+                            }
+                            */
 
                             return;
                         }
                     }
                 }
+
+                /* -TEST
+                if (config.Item("meleeMagnet").IsActive() && meleePrediction && Player.IsMelee
+                && Player.AttackRange < 200 && InAutoAttackRange(target) && target.IsValid<AIHeroClient>()
+                && ((AIHeroClient)target).Distance(Game.CursorPos) < 300)
+                {
+                    MovePrediction.Delay = Player.BasicAttack.SpellCastTime;
+                    MovePrediction.Speed = Player.BasicAttack.MissileSpeed;
+                    MoveTo(MovePrediction.GetPrediction((AIHeroClient)target).UnitPosition);
+                }
+                else {
+
+                */
 
                 if (CanMove(extraWindup) && Move)
                 {
@@ -782,6 +850,7 @@ namespace LeagueSharp.Common
 
             if (IsAutoAttack(args.SData.Name))
             {
+                // Need Test
                 FireAfterAttack(sender, args.Target as AttackableUnit);
                 _missileLaunched = true;
             }
@@ -823,12 +892,15 @@ namespace LeagueSharp.Common
             }
         }
 
+        private static MenuItem _stringList;
+        private static float _fix;
+
         internal static void OnBasicAttack(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (sender.IsMe && (args.Target is Obj_AI_Base || args.Target is Obj_BarracksDampener || args.Target is Obj_HQ))
             {
                 LastAATick = Utils.GameTimeTickCount - Game.Ping / 2;
-                _missileLaunched = false;
+                _missileLaunched = false; // true - need test
                 LastMoveCommandT = 0;
                 _autoattackCounter++;
 
@@ -841,8 +913,61 @@ namespace LeagueSharp.Common
                         _lastTarget = target;
                     }
                 }
+
+                /* - Need Test
+                var attackmode = Orbwalking._config.Item("CanAttackMode").GetValue<StringList>().SelectedIndex;
+                if (attackmode == 0)
+                {
+                    if (Orbwalker._config.Item("AttackModeSwitch").GetValue<bool>())
+                    {
+                        if (Player.HealthPercent <= 25)
+                        {
+                            _stringList.SetValue(new StringList(new string[] { "Damage", "Distance" }, 1));
+                            _fix = Player.AttackDelay * 905 - Game.Ping;
+                            Utility.DelayAction.Add((int)_fix, () => _missileLaunched = false);
+                            FireOnAttack(unit, _lastTarget);
+                            FireAfterAttack(unit, Spell.Target as AttackableUnit);
+                            return;
+                        }
+                    }
+                    if (_championName == "Jinx")
+                    {
+                        var jinxqattackspeed = ((((20 + ((Jinx.Q.Level - 1 * 10))) + new float[] { 0, 2, 4, 6, 8, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70 }[Player.Level - 1]) * Player.AttackDelay) + ((Player.AttackDelay * 750)));
+                        var buff = Player.GetBuff("jinxqramp");
+                        _fix = (_championName == "Jinx" && buff != null && buff.Count == 3 &&
+                                buff.EndTime - Game.Time > 1.75 && Jinx.FishBones
+                            ? jinxqattackspeed - Game.Ping
+                            : Player.AttackDelay * 750 - Game.Ping);
+                    }
+                    else
+                    {
+                        _fix = (Player.AttackDelay * 750)  - Game.Ping; //todo: had * 705 works perfectly // 800 = good on common 800 is actually bad now? try 750, not sure if distance to target impacts anything, but the - is wrong
+                        _fix = (Player.AttackDelay * 750)  - Game.Ping; //todo: had * 705 works perfectly // 800 = good on common 800 is actually bad now? try 750, not sure if distance to target impacts anything, but the - is wrong
+                                                                                                                                                                              //Console.WriteLine((Player.AttackDelay * 1000));
+                                                                                                                                                                              //Console.WriteLine(((1000 * Player.Distance(Spell.Target.Position)) / GetMyProjectileSpeed() + Player.AttackCastDelay));
+                    }
+                }
+                else
+                {
+                    if (Orbwalker._config.Item("AttackModeSwitch").GetValue<bool>())
+                    {
+                        if (Player.HealthPercent > 25)
+                        {
+                            _stringList.SetValue(new StringList(new string[] { "Damage", "Distance" }, 0));
+                            _fix = Player.AttackDelay * 750 - Game.Ping;
+                            Utility.DelayAction.Add((int)_fix, () => _missileLaunched = false);
+                            FireOnAttack(unit, _lastTarget);
+                            FireAfterAttack(unit, Spell.Target as AttackableUnit);
+                            return;
+                        }
+                    }
+                    _fix = Player.AttackDelay * 905 - Game.Ping;
+                }
+                Utility.DelayAction.Add((int)_fix, () => _missileLaunched = false);
+                */
             }
             FireOnAttack(sender, _lastTarget);
+            //FireAfterAttack(unit, Spell.Target as AttackableUnit); - need test
         }
 
         /// <summary>
@@ -852,7 +977,7 @@ namespace LeagueSharp.Common
         /// <param name="args">The <see cref="SpellbookStopCastEventArgs" /> instance containing the event data.</param>
         private static void SpellbookOnStopCast(Obj_AI_Base spellbook, SpellbookStopCastEventArgs args)
         {
-            //if (spellbook.IsValid && spellbook.IsMe && args.DestroyMissile && args.StopAnimation)
+            //if (spellbook.IsValid && spellbook.IsMe && args.DestroyMissile && args.StopAnimation) - TEST
             if (spellbook.IsValid && spellbook.IsMe && EloBuddy.SDK.Orbwalker.IsRanged && args.DestroyMissile && args.StopAnimation && !EloBuddy.SDK.Orbwalker.CanBeAborted)// CanCancelAttack)
             {
                 ResetAutoAttackTimer();
@@ -1010,15 +1135,31 @@ namespace LeagueSharp.Common
                     new MenuItem("FocusMinionsOverTurrets", "Focus minions over objectives").SetShared()
                         .SetValue(new KeyBind('M', KeyBindType.Toggle)));
 
+                //miscMenu.AddItem(new MenuItem("OW_Misc_AllMovementDisabled", "Disable All Movement").SetValue(false)); - TEST
+                //miscMenu.AddItem(new MenuItem("OW_Misc_AllAttackDisabled", "Disable All Attack").SetValue(false)); - TEST
+                //misc.AddItem(new MenuItem("meleeMagnet", "Melee Magnet").SetShared().SetValue(true)); - TEST 
                 _config.AddSubMenu(misc);
+
+                /* -TEST
+                var sebbyFix = new Menu("Sebby FIX", "Sebby FIX");
+
+                sebbyFix.AddItem(new MenuItem("DamageAdjust", "Adjust last hit auto attack damage").SetShared().SetValue(new Slider(0,-100, 100)));
+                sebbyFix.AddItem(new MenuItem("PassiveDmg", "Last hit include passive damage", true).SetShared().SetValue(true));
+
+                _config.AddSubMenu(sebbyFix); 
+                 */
 
                 /* Missile check */
                 _config.AddItem(new MenuItem("MissileCheck", "Use Missile Check").SetShared().SetValue(true));
 
                 /* Delay sliders */
-                _config.AddItem(
-                    new MenuItem("ExtraWindup", "Extra windup time").SetShared().SetValue(new Slider(80, 0, 200)));
+                _config.AddItem(new MenuItem("ExtraWindup", "Extra windup time").SetShared().SetValue(new Slider(80, 0, 200)));
                 _config.AddItem(new MenuItem("FarmDelay", "Farm delay").SetShared().SetValue(new Slider(0, 0, 200)));
+                /*- Need Test
+                _config.AddItem(new MenuItem("CanAttackMode", "Attacking mode").SetShared();
+                _config.AddItem(new MenuItem("AttackModeSwitch", "Switch to Distance when HP% < 25%").SetShared().SetValue(false));
+                _config.AddItem(new MenuItem("info1", "What is Attacking Mode?").SetFontStyle(FontStyle.Regular, SharpDX.Color.DarkTurquoise)).SetTooltip( "Damage moves less between attacks to attack more, distance moves more but attacks less.", SharpDX.Color.Yellow);
+                */
 
                 /*Load the menu*/
                 _config.AddItem(
@@ -1056,6 +1197,8 @@ namespace LeagueSharp.Common
                 _config.Item("StillCombo").ValueChanged +=
                     (sender, args) => { Move = !args.GetNewValue<KeyBind>().Active; };
 
+                //MovePrediction.SetTargetted(Player.BasicAttack.SpellCastTime, Player.BasicAttack.MissileSpeed); - test
+                //_stringList = _config.Item("CanAttackMode"); - Need Test
                 this.Player = ObjectManager.Player;
                 Game.OnUpdate += new GameUpdate(this.GameOnOnGameUpdate);
                 Drawing.OnDraw += new DrawingDraw(this.DrawingOnOnDraw);
@@ -1299,6 +1442,8 @@ namespace LeagueSharp.Common
                         }
 
                         var predHealth = HealthPrediction.GetHealthPrediction(minion, t, this.FarmDelay);
+
+                        //TEST var damage = Player.GetAutoAttackDamage(minion, _config.Item("PassiveDmg", true).GetValue<bool>()) + _config.Item("DamageAdjust").GetValue<Slider>().Value;
 
                         if (minion.Team != GameObjectTeam.Neutral && this.ShouldAttackMinion(minion))
                         {
@@ -1724,6 +1869,13 @@ namespace LeagueSharp.Common
                                 minion,
                                 (int)(this.Player.AttackDelay * 1000 * LaneClearWaitTimeMod),
                                 this.FarmDelay) <= this.Player.GetAutoAttackDamage(minion));
+
+                /* - need test
+                var attackCalc = (int)(Player.AttackDelay * 1000 * 1.6) + Game.Ping / 2 + 1000 * 500 / (int)GetMyProjectileSpeed();
+                return
+                    EntityManager.MinionsAndMonsters.EnemyMinions.Any(
+                        minion => HealthPrediction.LaneClearHealthPrediction(minion, attackCalc, FarmDelay) <= Player.GetAutoAttackDamage(minion));
+                */
             }
 
             #endregion
@@ -1803,6 +1955,8 @@ namespace LeagueSharp.Common
                         return;
                     }
 
+                    //ActiveMode == OrbwalkingMode.Combo
+
                     var target = this.GetTarget();
                     Orbwalk(target, GetOrbwalkingPoint().IsValid() ? GetOrbwalkingPoint() : Game.CursorPos,
                         _config.Item("ExtraWindup").GetValue<Slider>().Value,
@@ -1844,7 +1998,7 @@ namespace LeagueSharp.Common
             private bool ShouldWaitUnderTurret(Obj_AI_Minion noneKillableMinion)
             {
                 return
-                    ObjectManager.Get<Obj_AI_Minion>()
+                    EntityManager.MinionsAndMonsters.EnemyMinions
                         .Any(
                             minion =>
                             (noneKillableMinion != null ? noneKillableMinion.NetworkId != minion.NetworkId : true)
@@ -1860,9 +2014,193 @@ namespace LeagueSharp.Common
                                           + 1000 * (this.Player.AttackRange + 2 * this.Player.BoundingRadius)
                                           / this.Player.BasicAttack.MissileSpeed)),
                                 this.FarmDelay) <= this.Player.GetAutoAttackDamage(minion));
+
+
+                /* - test
+                var attackCalc = (int)(Player.AttackDelay * 1000 + (Player.IsMelee ? Player.AttackCastDelay * 1000 : Player.AttackCastDelay * 1000 +
+                                               1000 * (Player.AttackRange + 2 * Player.BoundingRadius) / Player.BasicAttack.MissileSpeed));
+                return
+                    EntityManager.MinionsAndMonsters.EnemyMinions.Any( minion =>
+                                (noneKillableMinion != null ? noneKillableMinion.NetworkId != minion.NetworkId : true) &&
+                                HealthPrediction.LaneClearHealthPrediction( minion, attackCalc , FarmDelay) <= Player.GetAutoAttackDamage(minion));
+                */
             }
 
             #endregion
         }
     }
+
+    /* - need test
+        public static void SetRandomize(float value, OrbwalkingRandomize randomize)
+        {
+            Randomize randomizeEntry;
+            if (Randomizes.TryGetValue(randomize, out randomizeEntry))
+            {
+                randomizeEntry.Default = value;
+                randomizeEntry.Current = value;
+            }
+            else
+            {
+                Randomizes[randomize] = new Randomize { Default = value, Current = value };
+            }
+        }
+        public static void SetRandomizeMin(float value, OrbwalkingRandomize randomize)
+        {
+            Randomize randomizeEntry;
+            if (Randomizes.TryGetValue(randomize, out randomizeEntry))
+            {
+                randomizeEntry.Min = value;
+            }
+            else
+            {
+                Randomizes[randomize] = new Randomize { Min = value };
+            }
+        }
+        public static void SetRandomizeMax(float value, OrbwalkingRandomize randomize)
+        {
+            Randomize randomizeEntry;
+            if (Randomizes.TryGetValue(randomize, out randomizeEntry))
+            {
+                randomizeEntry.Max = value;
+            }
+            else
+            {
+                Randomizes[randomize] = new Randomize { Max = value };
+            }
+        }
+        public static void SetRandomizeProbability(float value, OrbwalkingRandomize randomize)
+        {
+            Randomize randomizeEntry;
+            if (Randomizes.TryGetValue(randomize, out randomizeEntry))
+            {
+                randomizeEntry.Probability = value;
+            }
+            else
+            {
+                Randomizes[randomize] = new Randomize { Probability = value };
+            }
+        }
+        public static void SetRandomizeEnabled(bool value, OrbwalkingRandomize randomize)
+        {
+            Randomize randomizeEntry;
+            if (Randomizes.TryGetValue(randomize, out randomizeEntry))
+            {
+                randomizeEntry.Enabled = value;
+            }
+            else
+            {
+                Randomizes[randomize] = new Randomize { Enabled = value };
+            }
+        }
+        private static void SetRandomizeCurrent(Randomize randomize)
+        {
+            if (randomize.Enabled && Random.Next(0, 101) >= 100 - randomize.Probability)
+            {
+                if (randomize.Default > 0)
+                {
+                    var min = randomize.Default / 100f * randomize.Min;
+                    var max = randomize.Default / 100f * randomize.Max;
+                    randomize.Current = Random.Next(
+                        (int) Math.Floor(Math.Min(min, max)), (int) Math.Ceiling(Math.Max(min, max)) + 1);
+                }
+                else
+                {
+                    randomize.Current = 0;
+                }
+            }
+            else
+            {
+                randomize.Current = randomize.Default > 0
+                    ? Random.Next(
+                        (int) Math.Floor(randomize.Default * (randomize.Default >= 50 ? 0.95f : 0.9f)),
+                        (int) Math.Ceiling(randomize.Default * (randomize.Default >= 50 ? 1.05f : 1.1f)) + 1)
+                    : randomize.Default;
+            }
+        }
+
+        public class Randomize
+        {
+            public float Default { get; set; }
+            public float Min { get; set; }
+            public float Max { get; set; }
+            public float Probability { get; set; }
+            public bool Enabled { get; set; }
+            public float Current { get; set; }
+        }
+
+        // Delays menu 
+        var delays = new Menu("Delays", "Delays");
+        delays.AddItem(new MenuItem("ExtraWindup", "Windup").SetShared().SetValue(new Slider(70, 0, 200)));
+        delays.AddItem(new MenuItem("MovementDelay", "Movement").SetShared().SetValue(new Slider(70, 0, 250)))
+            .ValueChanged +=
+            (sender, args) => SetRandomize(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Move);
+        delays.AddItem(new MenuItem("AttackDelay", "Attack").SetShared().SetValue(new Slider(0, 0, 250)))
+            .ValueChanged +=
+            (sender, args) => SetRandomize(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        delays.AddItem(new MenuItem("FarmDelay", "Farm").SetShared().SetValue(new Slider(25, 0, 200)));
+        _config.AddSubMenu(delays);
+
+        // Randomize: Movement menu 
+        var randomizeMovement = new Menu("Movement Humanizer", "Movement");
+        randomizeMovement.AddItem(
+            new MenuItem("MovementMin", "Min. Multi %").SetShared().SetValue(new Slider(170, 100, 300)))
+            .ValueChanged +=
+            (sender, args) => SetRandomizeMin(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Move);
+        randomizeMovement.AddItem(
+            new MenuItem("MovementMax", "Max. Multi %").SetShared().SetValue(new Slider(220, 100, 300)))
+            .ValueChanged +=
+            (sender, args) => SetRandomizeMax(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Move);
+        randomizeMovement.AddItem(
+            new MenuItem("MovementProbability", "Probability %").SetShared().SetValue(new Slider(30)))
+            .ValueChanged +=
+            (sender, args) =>
+                SetRandomizeProbability(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Move);
+        randomizeMovement.AddItem(new MenuItem("MovementEnabled", "Enabled").SetShared().SetValue(false))
+            .ValueChanged +=
+            (sender, args) => SetRandomizeEnabled(args.GetNewValue<bool>(), OrbwalkingRandomize.Move);
+        _config.AddSubMenu(randomizeMovement);
+
+        // Randomize: Attacks menu
+        var randomizeAttack = new Menu("Attacks Humanizer", "Attack");
+        randomizeAttack.AddItem(
+            new MenuItem("AttackMin", "Min. Multi %").SetShared().SetValue(new Slider(170, 100, 300)))
+            .ValueChanged +=
+            (sender, args) => SetRandomizeMin(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        randomizeAttack.AddItem(
+            new MenuItem("AttackMax", "Max. Multi %").SetShared().SetValue(new Slider(220, 100, 300)))
+            .ValueChanged +=
+            (sender, args) => SetRandomizeMax(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        randomizeAttack.AddItem(
+            new MenuItem("AttackProbability", "Probability %").SetShared().SetValue(new Slider(30)))
+            .ValueChanged +=
+            (sender, args) =>
+                SetRandomizeProbability(args.GetNewValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        randomizeAttack.AddItem(new MenuItem("AttackEnabled", "Enabled").SetShared().SetValue(false))
+            .ValueChanged +=
+            (sender, args) => SetRandomizeEnabled(args.GetNewValue<bool>(), OrbwalkingRandomize.Attack);
+        _config.AddSubMenu(randomizeAttack);
+
+        SetRandomize(_config.Item("MovementDelay").GetValue<Slider>().Value, OrbwalkingRandomize.Move);
+        SetRandomizeMin(_config.Item("MovementMin").GetValue<Slider>().Value, OrbwalkingRandomize.Move);
+        SetRandomizeMax(_config.Item("MovementMax").GetValue<Slider>().Value, OrbwalkingRandomize.Move);
+        SetRandomizeProbability(
+            _config.Item("MovementProbability").GetValue<Slider>().Value, OrbwalkingRandomize.Move);
+        SetRandomizeEnabled(_config.Item("MovementEnabled").GetValue<bool>(), OrbwalkingRandomize.Move);
+
+        SetRandomize(_config.Item("AttackDelay").GetValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        SetRandomizeMin(_config.Item("AttackMin").GetValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        SetRandomizeMax(_config.Item("AttackMax").GetValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        SetRandomizeProbability(
+            _config.Item("AttackProbability").GetValue<Slider>().Value, OrbwalkingRandomize.Attack);
+        SetRandomizeEnabled(_config.Item("AttackEnabled").GetValue<bool>(), OrbwalkingRandomize.Attack);
+
+        /// <summary>
+        ///     The orbwalking delay.
+        /// </summary>
+        public enum OrbwalkingRandomize
+        {
+            Move,
+            Attack
+        }
+        */
 }
