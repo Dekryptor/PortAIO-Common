@@ -16,10 +16,6 @@ namespace LeagueSharp.Common
     public static class Orbwalking
     {
         #region Static Fields
-        /// <summary>
-        /// An array of the last 3 targets as NetworkIDs, useful for 3-hit passives or thunderlord
-        /// </summary>
-        public static int[] LastTargets = new int[] { 0, 0, 0 };
 
         /// <summary>
         ///     <c>true</c> if the orbwalker will attack.
@@ -171,19 +167,19 @@ namespace LeagueSharp.Common
             if (_championName == "Rengar")
             {
                 Obj_AI_Base.OnPlayAnimation += delegate (Obj_AI_Base sender, GameObjectPlayAnimationEventArgs args)
+                {
+                    if (sender.IsMe && args.Animation == "Spell5")
                     {
-                        if (sender.IsMe && args.Animation == "Spell5")
+                        var t = 0;
+
+                        if (_lastTarget != null && _lastTarget.IsValid)
                         {
-                            var t = 0;
-
-                            if (_lastTarget != null && _lastTarget.IsValid)
-                            {
-                                t += (int)Math.Min(ObjectManager.Player.Distance(_lastTarget) / 1.5f, 0.6f);
-                            }
-
-                            LastAATick = Utils.GameTimeTickCount - Game.Ping / 2 + t;
+                            t += (int)Math.Min(ObjectManager.Player.Distance(_lastTarget) / 1.5f, 0.6f);
                         }
-                    };
+
+                        LastAATick = Utils.GameTimeTickCount - Game.Ping / 2 + t;
+                    }
+                };
             }
 
             if (_championName == "Azir")
@@ -343,17 +339,15 @@ namespace LeagueSharp.Common
         /// <returns><c>true</c> if this instance can attack; otherwise, <c>false</c>.</returns>
         public static bool CanAttack()
         {
-            if (Player.ChampionName == "Graves")
+            /*if (Player.ChampionName == "Graves")
             {
                 var attackDelay = 1.0740296828d * 1000 * Player.AttackDelay - 716.2381256175d;
-                if (LeagueSharp.Common.Utils.GameTimeTickCount + Game.Ping / 2 + 25 >= LastAATick + attackDelay
-                    && Player.HasBuff("GravesBasicAttackAmmo1"))
+                if (Utils.GameTimeTickCount + Game.Ping / 2 + 25 >= LastAATick + attackDelay && Player.HasBuff("GravesBasicAttackAmmo1"))
                 {
                     return true;
                 }
-
                 return false;
-            }
+            }//*/
 
             if (Player.ChampionName == "Jhin")
             {
@@ -390,6 +384,16 @@ namespace LeagueSharp.Common
             }
 
             return NoCancelChamps.Contains(_championName) || (Utils.GameTimeTickCount + Game.Ping / 2 >= LastAATick + Player.AttackCastDelay * 1000 + extraWindup + localExtraWindup);
+        }
+
+        public static bool CanMove1(float extraWindup, bool disableMissileCheck = false)
+        {
+            return EloBuddy.SDK.Orbwalker.CanMove;
+        }
+
+        public static bool CanAttack1()
+        {
+            return EloBuddy.SDK.Orbwalker.CanAutoAttack;
         }
 
         /// <summary>
@@ -441,23 +445,19 @@ namespace LeagueSharp.Common
         public static float GetRealAutoAttackRange(AttackableUnit target)
         {
             var result = Player.AttackRange + Player.BoundingRadius;
-            if (target != null)
+            if (target.IsValidTarget() && target != null)
             {
-                if (target.IsValidTarget())
+                var aiBase = target as Obj_AI_Base;
+                if (aiBase != null && Player.ChampionName == "Caitlyn")
                 {
-                    var aiBase = target as Obj_AI_Base;
-                    if (aiBase != null && Player.ChampionName == "Caitlyn")
+                    if (aiBase.HasBuff("caitlynyordletrapinternal"))
                     {
-                        if (aiBase.HasBuff("caitlynyordletrapinternal"))
-                        {
-                            result += 650;
-                        }
+                        result += 650;
                     }
-
-                    return result + target.BoundingRadius;
                 }
-            }
 
+                return result + target.BoundingRadius;
+            }
 
             return result;
         }
@@ -629,8 +629,13 @@ namespace LeagueSharp.Common
                     }
                 }
 
-                if (CanMove(extraWindup) && Move)
+                if (CanMove(extraWindup))
                 {
+                    if (Orbwalker.LimitAttackSpeed && (Player.AttackDelay < 1 / 2.6f) && _autoattackCounter % 3 != 0)// && !CanMove(500, true))
+                    {
+                        return;
+                    }
+
                     MoveTo(position, Math.Max(holdAreaRadius, 30), false, useFixedDistance, randomizeMinDistance);
                 }
             }
@@ -798,12 +803,9 @@ namespace LeagueSharp.Common
             {
                 var spellName = Spell.SData.Name;
 
-                if (unit.IsMe)
+                if (unit.IsMe && IsAutoAttackReset(spellName) && Math.Abs(Spell.SData.CastTime) < 1.401298E-45f)
                 {
-                    if (IsAutoAttackReset(spellName) && Math.Abs(Spell.SData.CastTime) < 1.401298E-45f)
-                    {
-                        ResetAutoAttackTimer();
-                    }
+                    ResetAutoAttackTimer();
                 }
 
                 if (!IsAutoAttack(spellName))
@@ -816,6 +818,11 @@ namespace LeagueSharp.Common
                 Console.WriteLine(e);
             }
         }
+
+        /// <summary>
+        /// An array of the last 3 targets as NetworkIDs, useful for 3-hit passives or thunderlord
+        /// </summary>
+        public static int[] LastTargets = new int[] { 0, 0, 0 };
 
         internal static void OnBasicAttack(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
@@ -836,9 +843,16 @@ namespace LeagueSharp.Common
                         _lastTarget = target;
                     }
                 }
+
+                if (sender is Obj_AI_Turret && args.Target is Obj_AI_Base)
+                {
+                    LastTargetTurrets[sender.NetworkId] = (Obj_AI_Base)args.Target;
+                }
             }
             FireOnAttack(sender, _lastTarget);
         }
+
+        internal static readonly Dictionary<int, Obj_AI_Base> LastTargetTurrets = new Dictionary<int, Obj_AI_Base>();
 
         /// <summary>
         ///     Fired when the spellbook stops casting a spell.
@@ -850,6 +864,7 @@ namespace LeagueSharp.Common
             if (spellbook.IsValid && spellbook.IsMe && EloBuddy.SDK.Orbwalker.IsRanged && args.DestroyMissile && args.StopAnimation && !EloBuddy.SDK.Orbwalker.CanBeAborted)// CanCancelAttack)
             {
                 ResetAutoAttackTimer();
+                //EloBuddy.SDK.Orbwalker.ResetAutoAttack();
             }
         }
 
@@ -992,13 +1007,15 @@ namespace LeagueSharp.Common
                 var misc = new Menu("Misc", "Misc");
                 misc.AddItem(
                     new MenuItem("HoldPosRadius", "Hold Position Radius").SetShared().SetValue(new Slider(50, 50, 250)));
-                misc.AddItem(new MenuItem("PrioritizeFarm", "Prioritize farm over harass").SetShared().SetValue(true));
+                misc.AddItem(new MenuItem("PriorizeFarm", "Priorize farm over harass").SetShared().SetValue(true));
                 misc.AddItem(new MenuItem("AttackWards", "Auto attack wards").SetShared().SetValue(false));
                 misc.AddItem(new MenuItem("AttackPetsnTraps", "Auto attack pets & traps").SetShared().SetValue(true));
                 misc.AddItem(
                     new MenuItem("AttackGPBarrel", "Auto attack gangplank barrel").SetShared()
                         .SetValue(new StringList(new[] { "Combo and Farming", "Farming", "No" }, 1)));
                 misc.AddItem(new MenuItem("Smallminionsprio", "Jungle clear small first").SetShared().SetValue(false));
+                misc.AddItem(
+                    new MenuItem("LimitAttackSpeed", "Don't kite if Attack Speed > 2.5").SetShared().SetValue(false));
                 misc.AddItem(
                     new MenuItem("FocusMinionsOverTurrets", "Focus minions over objectives").SetShared()
                         .SetValue(new KeyBind('M', KeyBindType.Toggle)));
@@ -1058,6 +1075,14 @@ namespace LeagueSharp.Common
             #endregion
 
             #region Public Properties
+
+            public static bool LimitAttackSpeed
+            {
+                get
+                {
+                    return _config.Item("LimitAttackSpeed").GetValue<bool>();
+                }
+            }
 
             /// <summary>
             ///     Gets a value indicating whether the orbwalker is orbwalking by checking the missiles.
@@ -1198,7 +1223,7 @@ namespace LeagueSharp.Common
                 var mode = this.ActiveMode;
 
                 if ((mode == OrbwalkingMode.Mixed || mode == OrbwalkingMode.LaneClear)
-                    && !_config.Item("PrioritizeFarm").GetValue<bool>())
+                    && !_config.Item("PriorizeFarm").GetValue<bool>())
                 {
                     var target = TargetSelector.GetTarget(-1, TargetSelector.DamageType.Physical);
                     if (target != null)
@@ -1826,7 +1851,7 @@ namespace LeagueSharp.Common
             private bool ShouldWaitUnderTurret(Obj_AI_Minion noneKillableMinion)
             {
                 return
-                    EntityManager.MinionsAndMonsters.EnemyMinions
+                    ObjectManager.Get<Obj_AI_Minion>()
                         .Any(
                             minion =>
                             (noneKillableMinion != null ? noneKillableMinion.NetworkId != minion.NetworkId : true)
