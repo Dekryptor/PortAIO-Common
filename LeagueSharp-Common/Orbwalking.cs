@@ -565,7 +565,7 @@ namespace LeagueSharp.Common
                 }
             }
 
-            if (Utils.GameTimeTickCount - LastMoveCommandT < 70 + Math.Min(60, Game.Ping) && !overrideTimer && angle < 60)
+            if (Utils.GameTimeTickCount - LastMoveCommandT < 70 + Math.Min(60, Game.Ping) /*&& !overrideTimer*/ && angle < 60)
             {
                 return;
             }
@@ -796,16 +796,10 @@ namespace LeagueSharp.Common
         {
             try
             {
-                if (Spell.SData == null)
-                {
-                    return;
-                }
-
                 var spellName = Spell.SData.Name;
 
                 if (unit.IsMe)
                 {
-                    PushLastTargets(Spell.Target.NetworkId);
                     if (IsAutoAttackReset(spellName) && Math.Abs(Spell.SData.CastTime) < 1.401298E-45f)
                     {
                         ResetAutoAttackTimer();
@@ -837,6 +831,7 @@ namespace LeagueSharp.Common
                     var target = (Obj_AI_Base)args.Target;
                     if (target.IsValid)
                     {
+                        PushLastTargets(args.Target.NetworkId);
                         FireOnTargetSwitch(target);
                         _lastTarget = target;
                     }
@@ -852,7 +847,6 @@ namespace LeagueSharp.Common
         /// <param name="args">The <see cref="SpellbookStopCastEventArgs" /> instance containing the event data.</param>
         private static void SpellbookOnStopCast(Obj_AI_Base spellbook, SpellbookStopCastEventArgs args)
         {
-            //if (spellbook.IsValid && spellbook.IsMe && args.DestroyMissile && args.StopAnimation)
             if (spellbook.IsValid && spellbook.IsMe && EloBuddy.SDK.Orbwalker.IsRanged && args.DestroyMissile && args.StopAnimation && !EloBuddy.SDK.Orbwalker.CanBeAborted)// CanCancelAttack)
             {
                 ResetAutoAttackTimer();
@@ -999,7 +993,6 @@ namespace LeagueSharp.Common
                 misc.AddItem(
                     new MenuItem("HoldPosRadius", "Hold Position Radius").SetShared().SetValue(new Slider(50, 50, 250)));
                 misc.AddItem(new MenuItem("PrioritizeFarm", "Prioritize farm over harass").SetShared().SetValue(true));
-                misc.AddItem(new MenuItem("PrioritizeCasters", "Attack caster minions first").SetShared().SetValue(false));
                 misc.AddItem(new MenuItem("AttackWards", "Auto attack wards").SetShared().SetValue(false));
                 misc.AddItem(new MenuItem("AttackPetsnTraps", "Auto attack pets & traps").SetShared().SetValue(true));
                 misc.AddItem(
@@ -1606,24 +1599,13 @@ namespace LeagueSharp.Common
                             }
                         }
 
-                        var results = (from minion in
-                                       EntityManager.MinionsAndMonsters.EnemyMinions.Where(minion => minion.IsValidTarget() && this.InAutoAttackRange(minion) && this.ShouldAttackMinion(minion))
-                                       let predHealth =
-                                           HealthPrediction.LaneClearHealthPrediction(minion, (int)(this.Player.AttackDelay * 1000 * LaneClearWaitTimeMod), this.FarmDelay)
-                                       where
-                                           predHealth >= 2 * this.Player.GetAutoAttackDamage(minion) || Math.Abs(predHealth - minion.Health) < float.Epsilon
-                                       select minion);
-
-                        result = results.MaxOrDefault(m => !MinionManager.IsMinion(m, true) ? float.MaxValue : m.Health);
-
-                        if (_config.Item("PrioritizeCasters").GetValue<bool>())
-                        {
-                            result =
-                                results.OrderByDescending(
-                                    m =>
-                                        m.BaseSkinName.Contains("Ranged"))
-                                    .FirstOrDefault();
-                        }
+                        result = (from minion in
+                                      EntityManager.MinionsAndMonsters.EnemyMinions.Where(minion => minion.IsValidTarget() && this.InAutoAttackRange(minion) && this.ShouldAttackMinion(minion))
+                                  let predHealth =
+                                      HealthPrediction.LaneClearHealthPrediction(minion, (int)(this.Player.AttackDelay * 1000 * LaneClearWaitTimeMod), this.FarmDelay)
+                                  where
+                                      predHealth >= 2 * this.Player.GetAutoAttackDamage(minion) || Math.Abs(predHealth - minion.Health) < float.Epsilon
+                                  select minion).MaxOrDefault(m => !MinionManager.IsMinion(m, true) ? float.MaxValue : m.Health);
 
                         if (result != null && !result.IsDead)
                         {
@@ -1844,7 +1826,7 @@ namespace LeagueSharp.Common
             private bool ShouldWaitUnderTurret(Obj_AI_Minion noneKillableMinion)
             {
                 return
-                    ObjectManager.Get<Obj_AI_Minion>()
+                    EntityManager.MinionsAndMonsters.EnemyMinions
                         .Any(
                             minion =>
                             (noneKillableMinion != null ? noneKillableMinion.NetworkId != minion.NetworkId : true)
