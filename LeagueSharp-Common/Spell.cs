@@ -871,9 +871,11 @@
 
             if (IsChargedSpell && charge != null)
             {
+                return new PredictionOutput() { CastPosition = charge.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = charge.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
             else if (skillshot != null && IsSkillshot)
             {
+                return new PredictionOutput() { CastPosition = skillshot.GetPrediction(unit).CastPosition, Hitchance = pred.Hitchance, CollisionObjects = pred.CollisionObjects, AoeTargetsHit = pred.AoeTargetsHit, Input = pred.Input, UnitPosition = skillshot.GetPrediction(unit).UnitPosition, _aoeTargetsHitCount = pred._aoeTargetsHitCount };
             }
 
             return pred;
