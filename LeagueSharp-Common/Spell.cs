@@ -1063,26 +1063,17 @@
 
             if (type == SkillshotType.SkillshotCircle)
             {
-                skillshot = new EloBuddy.SDK.Spell.Skillshot(Slot, (uint)_range, SkillShotType.Circular, (int)(delay * 1000), (int)(speed), (int)width);
+                skillshot = new EloBuddy.SDK.Spell.Skillshot(Slot, (uint)_range, SkillShotType.Circular, (int)(delay * 1000), (int)(speed), (int)width) { AllowedCollisionCount = collision ? 0 : int.MaxValue };
             }
 
             if (Type == SkillshotType.SkillshotCone)
             {
-                skillshot = new EloBuddy.SDK.Spell.Skillshot(Slot, (uint)_range, SkillShotType.Cone, (int)(delay * 1000), (int)(speed), (int)width);
+                skillshot = new EloBuddy.SDK.Spell.Skillshot(Slot, (uint)_range, SkillShotType.Cone, (int)(delay * 1000), (int)(speed), (int)width) { AllowedCollisionCount = collision ? 0 : int.MaxValue };
             }
 
             if (Type == SkillshotType.SkillshotLine)
             {
-                skillshot = new EloBuddy.SDK.Spell.Skillshot(Slot, (uint)_range, SkillShotType.Linear, (int)(delay * 1000), (int)(speed), (int)width);
-            }
-
-            if (collision)
-            {
-                skillshot.AllowedCollisionCount = 0;
-            }
-            else
-            {
-                skillshot.AllowedCollisionCount = int.MaxValue;
+                skillshot = new EloBuddy.SDK.Spell.Skillshot(Slot, (uint)_range, SkillShotType.Linear, (int)(delay * 1000), (int)(speed), (int)width) { AllowedCollisionCount = collision ? 0 : int.MaxValue };
             }
         }
 

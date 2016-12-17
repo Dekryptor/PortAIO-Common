@@ -78,7 +78,7 @@ namespace LeagueSharp.Common
                 "xenzhaocombotarget", "yorickspectral", "reksaiq",
                 "itemtitanichydracleave", "masochism", "illaoiw",
                 "elisespiderw", "fiorae", "meditate", "sejuaninorthernwinds",
-                "asheq"
+                "asheq", "camilleq", "camilleq2"
             };
 
         /// <summary>
