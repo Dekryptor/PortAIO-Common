@@ -1,7 +1,7 @@
 namespace LeagueSharp.Common
 {
     using EloBuddy;
-//    using EloBuddy.SDK.Events;
+    //    using EloBuddy.SDK.Events;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -11,6 +11,59 @@ namespace LeagueSharp.Common
     /// </summary>
     public static class CustomEvents
     {
+        public class Game
+        {
+            public static event OnGameEndHandler OnGameEnd;
+
+            public delegate void OnGameEndHandler();
+
+            static Game()
+            {
+                Utility.DelayAction.Add(0, Initialize);
+            }
+
+            /// <summary>
+            ///     Initializes this instance.
+            /// </summary>
+            public static void Initialize()
+            {
+                var gameEndNotified = false;
+                EloBuddy.Game.OnTick += delegate
+                {
+                    // Make sure we're not repeating the invoke
+                    if (gameEndNotified)
+                    {
+                        return;
+                    }
+
+                    // Gets a dead nexus
+                    // and the nexus is dead or its health is equal to 0
+                    var nexus = ObjectManager.Get<Obj_HQ>().FirstOrDefault(n => n.Health <= 0 || n.IsDead);
+
+                    // Check and return if the nexus is null
+                    if (nexus == null)
+                    {
+                        return;
+                    }
+
+                    // Invoke the event
+                    OnGameEnd?.Invoke();
+
+                    // Set gameEndNotified to true, as the event has been completed
+                    gameEndNotified = true;
+                };
+
+                Chat.OnClientSideMessage += delegate (ChatClientSideMessageEventArgs eventArgs)
+                {
+                    if (eventArgs.Message.ToLower().Contains(" team agreed to a surrender with ") && !gameEndNotified)
+                    {
+                        OnGameEnd?.Invoke();
+                        gameEndNotified = true;
+                    }
+                };
+            }
+        }
+
         /// <summary>
         ///     Provides custom events regarding units.
         /// </summary>

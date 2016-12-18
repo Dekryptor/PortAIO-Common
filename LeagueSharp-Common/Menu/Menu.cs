@@ -156,6 +156,7 @@
 
             if (isRootMenu)
             {
+                CustomEvents.Game.OnGameEnd += delegate { this.SaveAll(); };
                 EloBuddy.Game.OnEnd += delegate { this.SaveAll(); };
                 Game.OnEnd += delegate { this.SaveAll(); };
                 AppDomain.CurrentDomain.DomainUnload += delegate { this.SaveAll(); };
