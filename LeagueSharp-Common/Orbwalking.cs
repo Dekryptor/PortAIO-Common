@@ -1789,6 +1789,14 @@ namespace LeagueSharp.Common
             {
                 try
                 {
+                    if (this._forcedTarget != null)
+                    {
+                        if (this._forcedTarget.IsDead || !this._forcedTarget.IsHPBarRendered || !this._forcedTarget.IsValidTarget())
+                        {
+                            this._forcedTarget = null;
+                        }
+                    }
+
                     if (this.ActiveMode == OrbwalkingMode.None)
                     {
                         return;
