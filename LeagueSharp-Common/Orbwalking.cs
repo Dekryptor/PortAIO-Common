@@ -163,6 +163,7 @@ namespace LeagueSharp.Common
             Obj_AI_Base.OnBasicAttack += new Obj_AI_BaseOnBasicAttack(OnBasicAttack);
             Obj_AI_Base.OnSpellCast += new Obj_AI_BaseDoCastSpell(Obj_AI_Base_OnDoCast);
             Spellbook.OnStopCast += new SpellbookStopCast(SpellbookOnStopCast);
+            EloBuddy.Player.OnIssueOrder += Player_OnIssueOrder;
 
             if (_championName == "Rengar")
             {
@@ -189,6 +190,47 @@ namespace LeagueSharp.Common
                 GameObject.OnCreate += OnCreate;
                 GameObject.OnDelete += OnDelete;
             }
+        }
+
+        public static int LastMove;
+        public static int NextMovementDelay;
+        public static Vector3 LastMovementPosition = Vector3.Zero;
+
+        private static void Player_OnIssueOrder(Obj_AI_Base sender, PlayerIssueOrderEventArgs args)
+        {
+            var senderValid = sender != null && sender.IsValid && sender.IsMe;
+
+            if (!senderValid || args.Order != GameObjectOrder.MoveTo)
+            {
+                return;
+            }
+            if (LastMovementPosition != Vector3.Zero && args.TargetPosition.Distance(LastMovementPosition) < 300)
+            {
+                if (NextMovementDelay == 0)
+                {
+                    var min = 80;
+                    var max = 250;
+                    NextMovementDelay = min > max ? min : WeightedRandom.Next(min, max);
+                }
+
+                if ((Utils.TickCount - LastMove) < NextMovementDelay)
+                {
+                    NextMovementDelay = 0;
+                    args.Process = false;
+                    return;
+                }
+
+                var wp = ObjectManager.Player.GetWaypoints();
+
+                if (args.TargetPosition.Distance(Player.ServerPosition) < 50)
+                {
+                    args.Process = false;
+                    return;
+                }
+            }
+
+            LastMovementPosition = args.TargetPosition;
+            LastMove = Utils.TickCount;
         }
 
         private static void OnCreate(GameObject sender, EventArgs args)

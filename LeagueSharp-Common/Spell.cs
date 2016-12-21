@@ -1236,6 +1236,7 @@
             {
                 return CastStates.NotReady;
             }
+
             if (minTargets != -1)
             {
                 aoe = true;
@@ -1296,7 +1297,7 @@
                 {
                     return CastStates.LowHitChance;
                 }
-                if (!skillshot.IsInRange(unit))
+                if (ObjectManager.Player.Distance(unit) > this.Range)
                 {
                     return CastStates.OutOfRange;
                 }
@@ -1310,15 +1311,34 @@
 
             if (this.IsChargedSpell && charge != null)
             {
-                if (!charge.Cast(charge.GetPrediction(unit).CastPosition))
+                if (EloBuddy.SDK.Extensions.IsInRange(ObjectManager.Player, charge.GetPrediction(unit).UnitPosition + 250 * (charge.GetPrediction(unit).UnitPosition - ObjectManager.Player.ServerPosition).Normalized(), this.Range))
                 {
-                    return CastStates.NotCasted;
+                    if (charge.Cast(charge.GetPrediction(unit).CastPosition))
+                    {
+                        return CastStates.SuccessfullyCasted;
+                    }
+                    else if (ObjectManager.Player.Spellbook.CastSpell(this.Slot, charge.GetPrediction(unit).CastPosition))
+                    {
+                        return CastStates.SuccessfullyCasted;
+                    }
+                    else
+                    {
+                        return CastStates.NotCasted;
+                    }
                 }
             }
 
             if (this.IsSkillshot && skillshot != null)
             {
-                if (!skillshot.Cast(skillshot.GetPrediction(unit).CastPosition))
+                if (skillshot.Cast(skillshot.GetPrediction(unit).CastPosition))
+                {
+                    return CastStates.SuccessfullyCasted;
+                }
+                else if (ObjectManager.Player.Spellbook.CastSpell(this.Slot, skillshot.GetPrediction(unit).CastPosition))
+                {
+                    return CastStates.SuccessfullyCasted;
+                }
+                else
                 {
                     return CastStates.NotCasted;
                 }
