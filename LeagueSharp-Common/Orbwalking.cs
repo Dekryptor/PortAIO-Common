@@ -639,7 +639,7 @@ namespace LeagueSharp.Common
             {
                 if (target != null)
                 {
-                    if (target.IsValidTarget() && Attack && CanAttack() /*&& EloBuddy.SDK.Orbwalker.CanAutoAttack*/)
+                    if (target.IsValidTarget() && Attack && CanAttack())
                     {
                         DisableNextAttack = false;
                         FireBeforeAttack(target);
@@ -662,7 +662,7 @@ namespace LeagueSharp.Common
                     }
                 }
 
-                if (CanMove(extraWindup))
+                if (CanMove(extraWindup) && Move)
                 {
                     MoveTo(position, Math.Max(holdAreaRadius, 30), false, useFixedDistance, randomizeMinDistance);
                 }
