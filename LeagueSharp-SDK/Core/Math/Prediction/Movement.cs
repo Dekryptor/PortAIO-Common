@@ -15,6 +15,7 @@
 //    along with this program.  If not, see http://www.gnu.org/licenses/
 // </copyright>
 
+using EloBuddy.SDK;
 namespace LeagueSharp.SDK
 {
     using System;
@@ -415,7 +416,7 @@ namespace LeagueSharp.SDK
                 speed /= 1.5f;
             }
 
-            return GetPositionOnPath(input, input.Unit.GetWaypoints(), speed);
+            return GetPositionOnPath(input, input.Unit.Path.ToList().To2D(), speed);
         }
 
         /// <summary>
@@ -450,7 +451,7 @@ namespace LeagueSharp.SDK
                 return HitChance.VeryHigh;
             }
 
-            var wayPoints = hero.GetWaypoints();
+            var wayPoints = hero.Path.ToList().To2D();
             var lastWaypoint = wayPoints.Last();
             var heroPos = hero.Position;
             var heroServerPos = hero.ServerPosition.ToVector2();

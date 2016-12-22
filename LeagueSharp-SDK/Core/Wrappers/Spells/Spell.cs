@@ -473,6 +473,17 @@ namespace LeagueSharp.SDK
 
             if (charge != null)
             {
+                if (Collision)
+                {
+                    if (charge.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
+                    {
+                        return CastStates.Collision;
+                    }
+                }
+                if (charge.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Impossible || charge.GetPrediction(unit).HitChance < convertHitChance(MinHitChance))
+                {
+                    return CastStates.LowHitChance;
+                }
                 if (!charge.IsInRange(unit))
                 {
                     return CastStates.OutOfRange;
@@ -484,6 +495,17 @@ namespace LeagueSharp.SDK
             }
             else
             {
+                if (Collision)
+                {
+                    if (skillshot.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Collision)
+                    {
+                        return CastStates.Collision;
+                    }
+                }
+                if (skillshot.GetPrediction(unit).HitChance == EloBuddy.SDK.Enumerations.HitChance.Impossible || skillshot.GetPrediction(unit).HitChance < convertHitChance(MinHitChance))
+                {
+                    return CastStates.LowHitChance;
+                }
                 if (!skillshot.IsInRange(unit))
                 {
                     return CastStates.OutOfRange;
@@ -498,21 +520,81 @@ namespace LeagueSharp.SDK
 
             if (this.IsChargedSpell && charge != null)
             {
-                if (!charge.Cast(charge.GetPrediction(unit).CastPosition))
+                if (EloBuddy.SDK.Extensions.IsInRange(ObjectManager.Player, charge.GetPrediction(unit).UnitPosition + 250 * (charge.GetPrediction(unit).UnitPosition - ObjectManager.Player.ServerPosition).Normalized(), this.Range))
                 {
-                    return CastStates.NotCasted;
+                    if (charge.Cast(charge.GetPrediction(unit).CastPosition))
+                    {
+                        return CastStates.SuccessfullyCasted;
+                    }
+                    else if (ObjectManager.Player.Spellbook.CastSpell(this.Slot, charge.GetPrediction(unit).CastPosition))
+                    {
+                        return CastStates.SuccessfullyCasted;
+                    }
+                    else
+                    {
+                        return CastStates.NotCasted;
+                    }
                 }
             }
 
             if (this.IsSkillshot && skillshot != null)
             {
-                if (!skillshot.Cast(skillshot.GetPrediction(unit).CastPosition))
+                if (skillshot.Cast(skillshot.GetPrediction(unit).CastPosition))
+                {
+                    return CastStates.SuccessfullyCasted;
+                }
+                else if (ObjectManager.Player.Spellbook.CastSpell(this.Slot, skillshot.GetPrediction(unit).CastPosition))
+                {
+                    return CastStates.SuccessfullyCasted;
+                }
+                else
                 {
                     return CastStates.NotCasted;
                 }
             }
 
             return CastStates.SuccessfullyCasted;
+        }
+
+        public EloBuddy.SDK.Enumerations.HitChance convertHitChance(HitChance a)
+        {
+            if (a == HitChance.Collision)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.Collision;
+            }
+            if (a == HitChance.Dashing)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.Dashing;
+            }
+            if (a == HitChance.High)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.High;
+            }
+            if (a == HitChance.Immobile)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.Immobile;
+            }
+            if (a == HitChance.Impossible)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.Impossible;
+            }
+            if (a == HitChance.Low)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.Low;
+            }
+            if (a == HitChance.Medium)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.Medium;
+            }
+            if (a == HitChance.OutOfRange)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.Impossible;
+            }
+            if (a == HitChance.VeryHigh)
+            {
+                return EloBuddy.SDK.Enumerations.HitChance.High;
+            }
+            return EloBuddy.SDK.Enumerations.HitChance.Impossible;
         }
 
         /// <summary>
