@@ -766,7 +766,7 @@ namespace LeagueSharp.Common
                 speed /= 1.5f;
             }
 
-            var result = GetPositionOnPath(input, input.Unit.GetWaypoints(), speed);
+            var result = GetPositionOnPath(input, input.Unit.Path.ToList().To2D(), speed);
 
             if (result.Hitchance >= HitChance.High && input.Unit is AIHeroClient)
             {
