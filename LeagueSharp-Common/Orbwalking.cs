@@ -134,7 +134,7 @@ namespace LeagueSharp.Common
         /// <summary>
         ///     The last target
         /// </summary>
-        private static AttackableUnit _lastTarget;
+        public static AttackableUnit _lastTarget;
 
         /// <summary>
         ///     The minimum distance
@@ -297,6 +297,7 @@ namespace LeagueSharp.Common
         ///     This event is fired after a unit finishes auto-attacking another unit (Only works with player for now).
         /// </summary>
         public static event AfterAttackEvenH AfterAttack;
+        public static event AfterAttackEvenH AfterAttackNoTarget;
 
         /// <summary>
         ///     This event is fired before the player auto attacks.
@@ -713,6 +714,11 @@ namespace LeagueSharp.Common
             if (AfterAttack != null && target.IsValidTarget())
             {
                 AfterAttack(unit, target);
+            }
+            if (AfterAttackNoTarget != null)
+            {
+                if (!target.IsValidTarget())
+                    AfterAttackNoTarget(unit, null);
             }
         }
 
