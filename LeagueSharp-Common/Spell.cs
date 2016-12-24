@@ -608,17 +608,9 @@
         {
             var currentHitchance = this.MinHitChance;
             this.MinHitChance = hitChance;
-            var castResult = this._cast(unit, packetCast, false, false) == CastStates.SuccessfullyCasted;
-            if (charge != null)
-            {
-                castResult = charge.CastMinimumHitchance(unit, convertHitChance(hitChance));
-            }
-            else
-            {
-                castResult = skillshot.CastMinimumHitchance(unit, convertHitChance(hitChance));
-            }
+            var castResult = this._cast(unit, packetCast, false, false);
             this.MinHitChance = currentHitchance;
-            return castResult;
+            return castResult == CastStates.SuccessfullyCasted;
         }
 
         /// <summary>
