@@ -47,7 +47,7 @@ namespace LeagueSharp.Common
         {
             menu = new Menu("Hacks", "Hacks");
 
-            MenuAntiAfk = menu.AddItem(new MenuItem("AfkHack", "Anti-AFK").SetValue(false));
+            MenuAntiAfk = menu.AddItem(new MenuItem("AfkHack", "Anti-AFK").SetValue(true));
             MenuAntiAfk.ValueChanged += (sender, args) => EloBuddy.Hacks.AntiAFK = args.GetNewValue<bool>();
 
             MenuDisableDrawings = menu.AddItem(new MenuItem("DrawingHack", "Disable Drawing").SetValue(false));
@@ -55,14 +55,10 @@ namespace LeagueSharp.Common
                 (sender, args) => EloBuddy.Hacks.DisableDrawings = args.GetNewValue<bool>();
             MenuDisableDrawings.SetValue(EloBuddy.Hacks.DisableDrawings);
 
-            MenuDisableSay =
-                menu.AddItem(
-                    new MenuItem("SayHack", "Disable L# Send Chat").SetValue(false)
-                        .SetTooltip("Block Game.Say from Assemblies"));
-            MenuDisableSay.ValueChanged +=
-                (sender, args) => EloBuddy.Hacks.IngameChat = args.GetNewValue<bool>();
+            MenuDisableSay =menu.AddItem(new MenuItem("SayHack", "Disable L# Send Chat").SetValue(false).SetTooltip("Block Game.Say from Assemblies"));
+            MenuDisableSay.ValueChanged +=(sender, args) => EloBuddy.Hacks.IngameChat = args.GetNewValue<bool>();
 
-            MenuTowerRange = menu.AddItem(new MenuItem("TowerHack", "Show Tower Ranges").SetValue(false));
+            MenuTowerRange = menu.AddItem(new MenuItem("TowerHack", "Show Tower Ranges").SetValue(true));
             MenuTowerRange.ValueChanged +=
                 (sender, args) => EloBuddy.Hacks.TowerRanges = args.GetNewValue<bool>();
 
