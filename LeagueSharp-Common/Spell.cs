@@ -403,7 +403,7 @@
 
                 if (this.IsCharging)
                 {
-                    return charge.Range;
+                    return charge.Range - 50;
                 }
 
                 return this.ChargedMaxRange;
