@@ -7,6 +7,7 @@ namespace LeagueSharp.Common
     using System.Linq;
 
     using LeagueSharp.Common.Data;
+    using EloBuddy.SDK;
 
     /// <summary>
     ///     Gets the damage done to a target.
@@ -7764,6 +7765,7 @@ namespace LeagueSharp.Common
             DamageType damageType,
             double amount)
         {
+            // NEED TO FIX
             var damage = 0d;
             switch (damageType)
             {
@@ -7978,7 +7980,21 @@ namespace LeagueSharp.Common
                     source,
                     target,
                     Math.Max(0, Math.Min(source.Spellbook.GetSpell(slot).Level - 1, 5)));
-                spell.CalculatedDamage = CalcDamage(source, target, spell.DamageType, rawDamage);
+                //spell.CalculatedDamage = CalcDamage(source, target, spell.DamageType, rawDamage);
+                EloBuddy.DamageType ty = EloBuddy.DamageType.Physical;
+                if (spell.DamageType == DamageType.Magical)
+                {
+                    ty = EloBuddy.DamageType.Magical;
+                }
+                if (spell.DamageType == DamageType.Physical)
+                {
+                    ty = EloBuddy.DamageType.Physical;
+                }
+                if (spell.DamageType == DamageType.True)
+                {
+                    ty = EloBuddy.DamageType.True;
+                }
+                spell.CalculatedDamage = EloBuddy.SDK.Damage.CalculateDamageOnUnit(source, target, ty, (float)rawDamage);
                 return spell;
             }
 
@@ -8129,7 +8145,7 @@ namespace LeagueSharp.Common
         /// <returns></returns>
         private static double CalcMagicDamage(Obj_AI_Base source, Obj_AI_Base target, double amount)
         {
-            var magicResist = target.SpellBlock;
+            var magicResist = target.CharData.SpellBlock;
 
             // Penetration can't reduce magic resist below 0.
             double value;
@@ -8225,7 +8241,7 @@ namespace LeagueSharp.Common
             }
 
             // Penetration can't reduce armor below 0.
-            var armor = target.Armor;
+            var armor = target.CharData.Armor;
             var bonusArmor = target.Armor - target.CharData.Armor;
 
             double value;
