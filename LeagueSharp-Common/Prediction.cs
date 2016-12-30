@@ -439,7 +439,7 @@ namespace LeagueSharp.Common
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>PredictionOutput.</returns>
-        internal static PredictionOutput GetDashingPrediction(PredictionInput input)
+        public static PredictionOutput GetDashingPrediction(PredictionInput input)
         {
             var dashData = input.Unit.GetDashInfo();
             var result = new PredictionOutput { Input = input };
@@ -492,7 +492,7 @@ namespace LeagueSharp.Common
         /// <param name="input">The input.</param>
         /// <param name="remainingImmobileT">The remaining immobile t.</param>
         /// <returns>PredictionOutput.</returns>
-        internal static PredictionOutput GetImmobilePrediction(PredictionInput input, double remainingImmobileT)
+        public static PredictionOutput GetImmobilePrediction(PredictionInput input, double remainingImmobileT)
         {
             var timeToReachTargetPosition = input.Delay + input.Unit.Distance(input.From) / input.Speed;
 
@@ -655,7 +655,7 @@ namespace LeagueSharp.Common
         /// <param name="ft">if set to <c>true</c>, will add extra delay to the spell..</param>
         /// <param name="checkCollision">if set to <c>true</c>, checks collision.</param>
         /// <returns>PredictionOutput.</returns>
-        internal static PredictionOutput GetPrediction(PredictionInput input, bool ft, bool checkCollision)
+        public static PredictionOutput GetPrediction(PredictionInput input, bool ft, bool checkCollision)
         {
             PredictionOutput result = null;
 
@@ -756,7 +756,7 @@ namespace LeagueSharp.Common
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>PredictionOutput.</returns>
-        internal static PredictionOutput GetStandardPrediction(PredictionInput input)
+        public static PredictionOutput GetStandardPrediction(PredictionInput input)
         {
             var speed = input.Unit.MoveSpeed;
 
@@ -780,7 +780,7 @@ namespace LeagueSharp.Common
         /// </summary>
         /// <param name="unit">The unit.</param>
         /// <returns>System.Double.</returns>
-        internal static double UnitIsImmobileUntil(Obj_AI_Base unit)
+        public static double UnitIsImmobileUntil(Obj_AI_Base unit)
         {
             var result =
                 unit.Buffs.Where(
