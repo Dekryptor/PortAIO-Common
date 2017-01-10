@@ -1,3 +1,5 @@
+using EloBuddy;
+using LeagueSharp.Common;
 namespace LeagueSharp.Common
 {
     using System;
@@ -6,7 +8,6 @@ namespace LeagueSharp.Common
     using System.Text.RegularExpressions;
 
     using SharpDX;
-    using EloBuddy;
 
     /// <summary>
     ///     Represents the chance of hitting an enemy.
@@ -231,7 +232,7 @@ namespace LeagueSharp.Common
         {
             get
             {
-                return this.UseBoundingRadius ? this.Radius : this.Radius;
+                return this.UseBoundingRadius ? this.Radius + this.Unit.BoundingRadius : this.Radius;
             }
         }
 
@@ -419,10 +420,6 @@ namespace LeagueSharp.Common
         /// </summary>
         public static void Initialize()
         {
-            _menu = new Menu("Prediction", "Prediction");
-            var slider = new MenuItem("PredMaxRange", "Max Range %").SetValue(new Slider(100, 70, 100));
-            _menu.AddItem(slider);
-            CommonMenu.Instance.AddSubMenu(_menu);
         }
 
         public static void Shutdown()
@@ -439,7 +436,7 @@ namespace LeagueSharp.Common
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>PredictionOutput.</returns>
-        public static PredictionOutput GetDashingPrediction(PredictionInput input)
+        internal static PredictionOutput GetDashingPrediction(PredictionInput input)
         {
             var dashData = input.Unit.GetDashInfo();
             var result = new PredictionOutput { Input = input };
@@ -492,7 +489,7 @@ namespace LeagueSharp.Common
         /// <param name="input">The input.</param>
         /// <param name="remainingImmobileT">The remaining immobile t.</param>
         /// <returns>PredictionOutput.</returns>
-        public static PredictionOutput GetImmobilePrediction(PredictionInput input, double remainingImmobileT)
+        internal static PredictionOutput GetImmobilePrediction(PredictionInput input, double remainingImmobileT)
         {
             var timeToReachTargetPosition = input.Delay + input.Unit.Distance(input.From) / input.Speed;
 
@@ -655,7 +652,7 @@ namespace LeagueSharp.Common
         /// <param name="ft">if set to <c>true</c>, will add extra delay to the spell..</param>
         /// <param name="checkCollision">if set to <c>true</c>, checks collision.</param>
         /// <returns>PredictionOutput.</returns>
-        public static PredictionOutput GetPrediction(PredictionInput input, bool ft, bool checkCollision)
+        internal static PredictionOutput GetPrediction(PredictionInput input, bool ft, bool checkCollision)
         {
             PredictionOutput result = null;
 
@@ -694,10 +691,6 @@ namespace LeagueSharp.Common
                 if (remainingImmobileT >= 0d)
                 {
                     result = GetImmobilePrediction(input, remainingImmobileT);
-                }
-                else
-                {
-                    input.Range = input.Range * CommonMenu.Instance.Item("PredMaxRange").GetValue<Slider>().Value / 100f;
                 }
             }
 
@@ -756,7 +749,7 @@ namespace LeagueSharp.Common
         /// </summary>
         /// <param name="input">The input.</param>
         /// <returns>PredictionOutput.</returns>
-        public static PredictionOutput GetStandardPrediction(PredictionInput input)
+        internal static PredictionOutput GetStandardPrediction(PredictionInput input)
         {
             var speed = input.Unit.MoveSpeed;
 
@@ -780,7 +773,7 @@ namespace LeagueSharp.Common
         /// </summary>
         /// <param name="unit">The unit.</param>
         /// <returns>System.Double.</returns>
-        public static double UnitIsImmobileUntil(Obj_AI_Base unit)
+        internal static double UnitIsImmobileUntil(Obj_AI_Base unit)
         {
             var result =
                 unit.Buffs.Where(
