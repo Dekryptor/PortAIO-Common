@@ -508,7 +508,7 @@ namespace LeagueSharp.Common
                     }
                 }
 
-                return result + target.BoundingRadius;
+                return result + target.BoundingRadius - 50;
             }
 
             return result;
