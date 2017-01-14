@@ -7782,15 +7782,14 @@ namespace LeagueSharp.Common
             DamageType damageType,
             double amount)
         {
-            // NEED TO FIX
             var damage = 0d;
             switch (damageType)
             {
                 case DamageType.Magical:
-                    damage = CalcMagicDamage(source, target, amount);
+                    damage = EloBuddy.SDK.Damage.CalculateDamageOnUnit(source, target, EloBuddy.DamageType.Magical, (float)amount);
                     break;
                 case DamageType.Physical:
-                    damage = CalcPhysicalDamage(source, target, amount);
+                    damage = EloBuddy.SDK.Damage.CalculateDamageOnUnit(source, target, EloBuddy.DamageType.Physical, (float)amount);
                     break;
                 case DamageType.True:
                     damage = amount;
