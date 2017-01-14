@@ -4313,7 +4313,24 @@ namespace LeagueSharp.Common
                         DamageType = DamageType.Physical,
                         Damage = (source, target, level) =>
                         {
-                            return GetRendDamage(source, target);
+                            var count = target.GetBuffCount("kalistaexpungemarker");
+                            if (count > 0)
+                            {
+                                return (new double[] {20, 30, 40, 50, 60}[level]
+                                        + 0.6
+                                        *(source.BaseAttackDamage
+                                          + source.FlatPhysicalDamageMod)) +
+                                       // Base damage of E
+                                       ((count - 1)
+                                        *(new double[] {10, 14, 19, 25, 32}[level]
+                                          + // Base damage per spear
+                                          new double[] {0.2, 0.225, 0.25, 0.275, 0.3}[
+                                              level]
+                                          *(source.BaseAttackDamage
+                                            + source.FlatPhysicalDamageMod)));
+                                // Damage multiplier per spear
+                            }
+                            return 0;
                         }
                     },
                 });
