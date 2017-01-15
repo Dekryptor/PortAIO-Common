@@ -7792,7 +7792,7 @@ namespace LeagueSharp.Common
                     damage = EloBuddy.SDK.Damage.CalculateDamageOnUnit(source, target, EloBuddy.DamageType.Physical, (float)amount);
                     break;
                 case DamageType.True:
-                    damage = amount;
+                    damage = Math.Max(Math.Floor(amount), 0);
                     break;
             }
 
