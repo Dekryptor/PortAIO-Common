@@ -216,7 +216,7 @@
                 }
 
                 var targets =
-                    EloBuddy.SDK.EntityManager.Heroes.Enemies.FindAll(
+                    EloBuddy.SDK.EntityManager.Heroes.Enemies.Where(
                         hero =>
                         ignoredChamps.All(ignored => ignored.NetworkId != hero.NetworkId)
                         && IsValidTarget(hero, range, type, ignoreShieldSpells, rangeCheckFrom)
