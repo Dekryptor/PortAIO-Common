@@ -572,11 +572,6 @@ namespace LeagueSharp.Common
             bool useFixedDistance = true,
             bool randomizeMinDistance = true)
         {
-            if (!CanMove(0) || Core.GameTickCount - LastMoveCommandT <= 220)
-            {
-                return;
-            }
-
             var playerPosition = Player.ServerPosition;
 
             if (playerPosition.Distance(position, true) < holdAreaRadius * holdAreaRadius)
@@ -1231,13 +1226,6 @@ namespace LeagueSharp.Common
                 AttackableUnit result = null;
                 var mode = this.ActiveMode;
 
-                //Forced target
-                if (this._forcedTarget != null)
-                {
-                    if (this._forcedTarget.IsHPBarRendered && this._forcedTarget.IsValidTarget() && this.InAutoAttackRange(this._forcedTarget))
-                        return this._forcedTarget;
-                }
-
                 if ((mode == OrbwalkingMode.Mixed || mode == OrbwalkingMode.LaneClear)
                     && !_config.Item("PriorizeFarm").GetValue<bool>())
                 {
@@ -1351,6 +1339,13 @@ namespace LeagueSharp.Common
                             }
                         }
                     }
+                }
+
+                //Forced target
+                if (this._forcedTarget != null)
+                {
+                    if (this._forcedTarget.IsHPBarRendered && this._forcedTarget.IsValidTarget() && this.InAutoAttackRange(this._forcedTarget))
+                        return this._forcedTarget;
                 }
 
                 /* turrets / inhibitors / nexus */
