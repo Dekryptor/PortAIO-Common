@@ -7873,7 +7873,103 @@ namespace LeagueSharp.Common
             Obj_AI_Base target,
             bool includePassive = false)
         {
-            return EloBuddy.SDK.Damage.GetAutoAttackDamage(source, target, includePassive);
+            //return EloBuddy.SDK.Damage.GetAutoAttackDamage(source, target, includePassive);
+            double result = source.TotalAttackDamage;
+            var k = 1d;
+            if (source.BaseSkinName == "Kalista")
+            {
+                k = 0.9d;
+            }
+            if (source.BaseSkinName == "Kled" &&
+                ObjectManager.Player.Spellbook.GetSpell(SpellSlot.Q).Name == "KledRiderQ")
+            {
+                k = 0.8d;
+            }
+
+            if (!includePassive)
+            {
+                return CalcPhysicalDamage(source, target, result * k);
+            }
+
+            var reduction = 0d;
+
+            var hero = source as AIHeroClient;
+            if (hero != null)
+            {
+                // Spoils of War
+                var minionTarget = target as Obj_AI_Minion;
+                if (hero.IsMelee() && minionTarget != null && minionTarget.IsEnemy
+                    && minionTarget.Team != GameObjectTeam.Neutral
+                    && hero.Buffs.Any(buff => buff.Name == "talentreaperdisplay" && buff.Count > 0))
+                {
+                    if (
+                        HeroManager.AllHeroes.Any(
+                            h =>
+                                h.NetworkId != source.NetworkId && h.Team == source.Team
+                                && h.Distance(minionTarget.Position) < 1100))
+                    {
+                        var value = 0;
+
+                        if (Items.HasItem(3302, hero))
+                        {
+                            value = 200; // Relic Shield
+                        }
+                        else if (Items.HasItem(3097, hero))
+                        {
+                            value = 240; // Targon's Brace
+                        }
+                        else if (Items.HasItem(3401, hero))
+                        {
+                            value = 400; // Face of the Mountain
+                        }
+
+                        return value + hero.TotalAttackDamage;
+                    }
+                }
+
+                //Champions passive damages:
+                result +=
+                    AttackPassives.Where(
+                        p => (p.ChampionName == "" || p.ChampionName == hero.ChampionName) && p.IsActive(hero, target))
+                        .Sum(passive => passive.GetDamage(hero, target));
+
+                // BotRK
+                if (Items.HasItem(3153, hero))
+                {
+                    var d = 0.06 * target.Health;
+                    if (target is Obj_AI_Minion)
+                    {
+                        d = Math.Min(d, 60);
+                    }
+
+                    result += d;
+                }
+            }
+
+            var targetHero = target as AIHeroClient;
+            if (targetHero != null)
+            {
+                // Ninja tabi
+                if (Items.HasItem(3047, targetHero))
+                {
+                    k *= 0.9d;
+                }
+
+                // Nimble Fighter
+                if (targetHero.ChampionName == "Fizz")
+                {
+                    var f = new int[] { 4, 6, 8, 10, 12, 14 };
+                    reduction += f[(targetHero.Level - 1) / 3];
+                }
+            }
+
+            //TODO: need to check if there are items or spells in game that reduce magical dmg % or by amount
+            if (hero != null && hero.ChampionName == "Corki")
+            {
+                return CalcMixedDamage(source, target, (result - reduction) * k, result * k);
+            }
+
+            return CalcPhysicalDamage(source, target, (result - reduction) * k + PassiveFlatMod(source, target));
         }
 
         /// <summary>
