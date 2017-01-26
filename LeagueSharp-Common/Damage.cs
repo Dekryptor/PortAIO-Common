@@ -1690,7 +1690,7 @@ namespace LeagueSharp.Common
                         source.CalcDamage(
                             target,
                             DamageType.Magical,
-                            2.5 + (source.Level < 10 ? 0.5 : 1) * source.Level)
+                            8 + (2 * source.Level))
             };
 
             AttackPassives.Add(p);
@@ -7328,10 +7328,7 @@ namespace LeagueSharp.Common
                         DamageType = DamageType.Magical,
                         Damage =
                             (source, target, level) =>
-                                Math.Max(
-                                    new double[] {75, 125, 175, 225, 275}[level],
-                                    new double[] {8, 10, 12, 14, 16}[level]/100
-                                    *target.MaxHealth) + source.TotalMagicalDamage
+                                new double[] {6 , 7 , 8 , 9 , 10}[level]/100 *target.MaxHealth + (1.2*source.TotalAttackDamage + 0.9 * source.TotalMagicalDamage)
                     },
                     //R - max
                     new DamageSpell
@@ -7340,8 +7337,8 @@ namespace LeagueSharp.Common
                         DamageType = DamageType.Magical,
                         Damage =
                             (source, target, level) =>
-                                new double[] {150, 250, 350}[level]
-                                + 2*source.FlatPhysicalDamageMod
+                                new double[] {175,350,525}[level]
+                                + 1.67*source.FlatPhysicalDamageMod
                     },
                 });
 
