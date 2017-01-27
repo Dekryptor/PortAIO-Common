@@ -6467,7 +6467,7 @@ namespace LeagueSharp.Common
                         Damage =
                             (source, target, level) =>
                                 new double[] {110, 150, 190, 230, 270}[level]
-                                + 1.1*source.FlatPhysicalDamageMod
+                                + source.FlatPhysicalDamageMod
                     },
                     //R
                     new DamageSpell
