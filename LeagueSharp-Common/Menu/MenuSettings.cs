@@ -57,7 +57,7 @@
         {
             get
             {
-                return Path.Combine(Config.AppDataDirectory, "MenuSaveData");
+                return Path.Combine(Config.AppDataDirectory, "PortAIOMenuSaveData");
             }
         }
 

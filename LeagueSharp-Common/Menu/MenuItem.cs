@@ -154,8 +154,7 @@
             this.FontColor = Color.White;
             this.ShowItem = true;
             this.Tag = 0;
-            this.configName = Assembly.GetCallingAssembly().GetName().Name
-                              + Assembly.GetCallingAssembly().GetType().GUID;
+            this.configName = name + Assembly.GetCallingAssembly().GetType().GUID;
         }
 
 
