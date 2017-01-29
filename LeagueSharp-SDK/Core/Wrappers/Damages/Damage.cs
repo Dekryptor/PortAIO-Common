@@ -245,8 +245,8 @@ namespace LeagueSharp.SDK
                 dmgReduce *= 0.88;
             }
 
-            dmgMagical = EloBuddy.SDK.Damage.CalculateDamageOnUnit(source, target, EloBuddy.DamageType.Magical, (float)dmgMagical);
-            dmgPhysical = EloBuddy.SDK.Damage.CalculateDamageOnUnit(source, target, EloBuddy.DamageType.Physical, (float)dmgPhysical);
+            dmgPhysical = source.CalculatePhysicalDamage(target, dmgPhysical);
+            dmgMagical = source.CalculateMagicDamage(target, dmgMagical);
 
             // Fizz P
             if (targetHero != null && targetHero.ChampionName == "Fizz")
