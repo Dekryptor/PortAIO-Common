@@ -20,6 +20,7 @@ namespace LeagueSharp.SDK.Utils
     using System;
     using System.Linq;
     using EloBuddy;
+    using EloBuddy.SDK;
 
     /// <summary>
     ///     AutoAttack utility class.
@@ -145,25 +146,7 @@ namespace LeagueSharp.SDK.Utils
         /// </returns>
         public static float GetRealAutoAttackRange(this Obj_AI_Base sender, AttackableUnit target)
         {
-            if (!sender.IsValid())
-            {
-                return 0;
-            }
-
-            var result = sender.AttackRange
-                         + (target != null && target.IsValid ? 0 : 0);
-            var heroSource = sender as AIHeroClient;
-
-            if (heroSource != null && heroSource.ChampionName == "Caitlyn")
-            {
-                var aiBaseTarget = target as Obj_AI_Base;
-
-                if (aiBaseTarget != null && aiBaseTarget.HasBuff("caitlynyordletrapinternal"))
-                {
-                    result += 650;
-                }
-            }
-            return result;
+            return EloBuddy.Player.Instance.GetAutoAttackRange(null);
         }
 
         /// <summary>
