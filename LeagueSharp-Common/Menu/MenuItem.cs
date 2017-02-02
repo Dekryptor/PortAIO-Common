@@ -1006,7 +1006,7 @@
 
                     break;
                 case MenuValueType.KeyBind:
-                    if (!MenuGUI.IsChatOpen && !Shop.IsOpen)
+                    if (!MenuGUI.IsChatOpen)
                     {
                         switch (message)
                         {

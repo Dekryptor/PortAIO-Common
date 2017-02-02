@@ -31,7 +31,6 @@ namespace LeagueSharp.Common
             TargetSelector.Initialize();
             Prediction.Initialize();
             Hacks.Initialize();
-            FakeClicks.Initialize();
 
             Instance.AddToMainMenu();
         }
@@ -41,7 +40,6 @@ namespace LeagueSharp.Common
             TargetSelector.Shutdown();
             Prediction.Shutdown();
             Hacks.Shutdown();
-            FakeClicks.Shutdown();
 
             Menu.Remove(Instance);
         }
