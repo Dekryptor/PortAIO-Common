@@ -351,21 +351,9 @@ namespace LeagueSharp.SDK
                 result = GetStandardPrediction(input);
             }
 
-            // Check if the unit position is in range
-            if (Math.Abs(input.Range - float.MaxValue) > float.Epsilon)
+            if (!((input.Source).Distance(input.Unit, true) < input.Range * input.Range))
             {
-                if (result.Hitchance >= HitChance.High
-                    && input.RangeCheckFrom.DistanceSquared(input.Unit.Position)
-                    > Math.Pow(input.Range + input.RealRadius * 3 / 4, 2))
-                {
-                    result.Hitchance = HitChance.Medium;
-                }
-
-                if (input.RangeCheckFrom.DistanceSquared(result.UnitPosition)
-                    > Math.Pow(input.Range + (input.Type == SkillshotType.SkillshotCircle ? input.RealRadius : 0), 2))
-                {
-                    result.Hitchance = HitChance.OutOfRange;
-                }
+                result.Hitchance = HitChance.OutOfRange;
             }
 
             // Check for collision
