@@ -351,7 +351,7 @@ namespace LeagueSharp.SDK
                 result = GetStandardPrediction(input);
             }
 
-            if (!((input.Source).Distance(input.Unit, true) < input.Range * input.Range))
+            if (!((Player.Instance).Distance(input.Unit, true) < input.Range * input.Range))
             {
                 result.Hitchance = HitChance.OutOfRange;
             }
